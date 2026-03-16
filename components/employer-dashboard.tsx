@@ -72,123 +72,14 @@ interface AccessRequest {
 // The organization is set to be AT THEIR LIMIT (12/12 assessments used).
 // When attempting to commission or request access, the upgrade dialog should appear.
 //
-// TO ROLL BACK: Change assessmentsUsedThisPeriod to a lower value (e.g., 8)
-// ============================================================================
-
-// Mock data for preview
-const MOCK_STATS: OrganizationStats = {
-  assessmentsCommissioned: 12,
-  assessmentsCompleted: 7,
-  assessmentsPending: 4,
-  assessmentsExpired: 1,
-  accessRequestsSent: 8,
-  accessRequestsApproved: 5,
-  accessRequestsPending: 3,
-  subscriptionTier: "TIER_6_12",
-  // TEMPORARY TEST STATE: Set to maximum to test limit enforcement
-  assessmentsUsedThisPeriod: 8, // <-- Reverted from test state (12) to normal operation (8)
-  assessmentsAllowedThisPeriod: 12,
-  periodEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+// Default empty stats for initial state
+const EMPTY_STATS: OrganizationStats = {
+  assessmentsCommissioned: 0, assessmentsCompleted: 0, assessmentsPending: 0,
+  assessmentsExpired: 0, accessRequestsSent: 0, accessRequestsApproved: 0,
+  accessRequestsPending: 0, subscriptionTier: "Free",
+  assessmentsUsedThisPeriod: 0, assessmentsAllowedThisPeriod: 5,
+  periodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
 }
-
-// ============================================================================
-// END TEMPORARY TEST STATE
-// ============================================================================
-
-const MOCK_SPONSORED: SponsoredAssessment[] = [
-  {
-    id: "sa-1",
-    assessment_id: "asmt-1",
-    candidate_email: "alex.candidate@example.com",
-    candidate_name: "Alex Candidate",
-    status: "ACCEPTED",
-    assessment_name: "Leadership Coachability Assessment",
-    assessment_status: "IN_PROGRESS",
-    organization_name: "Preview Organization",
-    sponsored_by_name: "John Smith",
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sa-2",
-    assessment_id: "asmt-2",
-    candidate_email: "jordan.lee@example.com",
-    candidate_name: "Jordan Lee",
-    status: "COMPLETED",
-    assessment_name: "Executive Coaching Assessment",
-    assessment_status: "COMPLETED",
-    organization_name: "Preview Organization",
-    sponsored_by_name: "John Smith",
-    created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sa-3",
-    assessment_id: "asmt-3",
-    candidate_email: "sam.rivera@example.com",
-    candidate_name: "Sam Rivera",
-    status: "PENDING",
-    assessment_name: "Team Leadership Assessment",
-    assessment_status: "NOT_STARTED",
-    organization_name: "Preview Organization",
-    sponsored_by_name: "John Smith",
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
-const MOCK_ACCESS_REQUESTS: AccessRequest[] = [
-  {
-    id: "ar-1",
-    assessment_id: "asmt-4",
-    candidate_email: "taylor.morgan@example.com",
-    candidate_name: "Taylor Morgan",
-    assessment_name: "Self-Directed Coachability Assessment",
-    status: "APPROVED",
-    requested_by_name: "John Smith",
-    organization_name: "Preview Organization",
-    requested_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ar-2",
-    assessment_id: "asmt-5",
-    candidate_email: "casey.kim@example.com",
-    candidate_name: "Casey Kim",
-    assessment_name: "Professional Development Assessment",
-    status: "PENDING",
-    requested_by_name: "John Smith",
-    organization_name: "Preview Organization",
-    requested_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ar-3",
-    assessment_id: "asmt-6",
-    candidate_email: "morgan.chen@example.com",
-    candidate_name: "Morgan Chen",
-    assessment_name: "Career Growth Assessment",
-    status: "DECLINED",
-    requested_by_name: "John Smith",
-    organization_name: "Preview Organization",
-    requested_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 23 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ar-4",
-    assessment_id: "asmt-8",
-    candidate_email: "alex.rivera@example.com",
-    candidate_name: "Alex Rivera",
-    assessment_name: "Q4 2024 Leadership Assessment",
-    status: "APPROVED",
-    requested_by_name: "John Smith",
-    organization_name: "Preview Organization",
-    requested_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    expires_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-    originally_requested_assessment_id: "asmt-7",
-    originally_requested_assessment_name: "Q2 2024 Performance Review",
-  },
-]
 
 const getTierLimits = (tier: string): { min: number; max: number } => {
   switch (tier) {
@@ -225,9 +116,22 @@ const getNextTier = (currentTier: string): { tier: string; name: string; limit: 
 
 export function EmployerDashboard() {
   const { toast } = useToast()
-  const [stats, setStats] = useState<OrganizationStats>(MOCK_STATS)
-  const [sponsoredAssessments, setSponsoredAssessments] = useState<SponsoredAssessment[]>(MOCK_SPONSORED)
-  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>(MOCK_ACCESS_REQUESTS)
+  const [stats, setStats] = useState<OrganizationStats>(EMPTY_STATS)
+  const [sponsoredAssessments, setSponsoredAssessments] = useState<SponsoredAssessment[]>([])
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([])
+
+  // Fetch real data from API
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/employer/stats").then(r => r.ok ? r.json() : EMPTY_STATS),
+      fetch("/api/employer/sponsored-assessments").then(r => r.ok ? r.json() : []),
+      fetch("/api/employer/assessment-requests").then(r => r.ok ? r.json() : []),
+    ]).then(([s, sa, ar]) => {
+      setStats(s)
+      setSponsoredAssessments(sa)
+      setAccessRequests(ar)
+    }).catch(console.error)
+  }, [])
   const [isCommissionDialogOpen, setIsCommissionDialogOpen] = useState(false)
   const [isAccessRequestDialogOpen, setIsAccessRequestDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)

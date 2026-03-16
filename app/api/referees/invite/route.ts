@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { createReferee, createRefereeInvitation } from "@/lib/db"
+import { sendEmail, createRefereeInvitationEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
 
 export async function POST(req: Request) {
@@ -21,9 +22,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Assessment ID is required" }, { status: 400 })
     }
 
+    // Prevent self-invitation: filter out participant's own email
+    const userEmail = session.user.email?.toLowerCase()
+    const filteredReferees = referees.filter((r: any) => r.email?.toLowerCase() !== userEmail)
+    if (filteredReferees.length === 0) {
+      return NextResponse.json({ error: "You cannot invite yourself as a referee" }, { status: 400 })
+    }
+    if (filteredReferees.length < referees.length) {
+      console.warn(`Blocked self-invitation attempt by ${userEmail}`)
+    }
+
     const createdInvitations = []
 
-    for (const refereeData of referees) {
+    for (const refereeData of filteredReferees) {
       // Create referee
       const referee = await createReferee({
         name: refereeData.name,
@@ -48,8 +59,22 @@ export async function POST(req: Request) {
       createdInvitations.push({
         ...invitation,
         referee,
-        invitationUrl: `${process.env.NEXTAUTH_URL}/referee/${token}`,
+        invitationUrl: `${process.env.NEXTAUTH_URL}/referee-survey/${token}`,
       })
+
+      // Send invitation email
+      try {
+        const emailTemplate = createRefereeInvitationEmail({
+          refereeName: refereeData.name,
+          candidateName: session.user.name || "A participant",
+          relationship: refereeData.relationship || "colleague",
+          surveyLink: `${process.env.NEXTAUTH_URL}/referee-survey/${token}`,
+          personalMessage: refereeData.message,
+        })
+        await sendEmail({ ...emailTemplate, to: refereeData.email })
+      } catch (emailError) {
+        console.error(`Failed to send email to ${refereeData.email}:`, emailError)
+      }
     }
 
     return NextResponse.json(

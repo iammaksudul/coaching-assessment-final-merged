@@ -54,86 +54,12 @@ export default function RefereeManagementPage() {
 
   const fetchAssessmentData = async () => {
     try {
-      // Mock assessment data
-      const mockAssessment: Assessment = {
-        id: assessmentId,
-        name: "Leadership Development Assessment",
-        status: "IN_PROGRESS",
-        self_assessment_completed: true,
-        created_at: "2024-01-15T10:00:00Z",
-        can_close_manually: true,
-        closure_requirements: {
-          self_assessment: true,
-          minimum_referees: 2,
-          completed_referees: 2,
-        },
+      const res = await fetch(`/api/assessments/${assessmentId}/referees`)
+      if (res.ok) {
+        const data = await res.json()
+        setAssessment(data.assessment)
+        setInvitations(data.invitations || [])
       }
-
-      // Mock referee invitations
-      const mockInvitations: RefereeInvitation[] = [
-        {
-          id: "ref-1",
-          referee_name: "Sarah Wilson",
-          referee_email: "sarah.wilson@example.com",
-          relationship: "Direct Manager",
-          status: "COMPLETED",
-          invited_at: "2024-01-16T10:00:00Z",
-          expires_at: "2024-02-16T10:00:00Z",
-          completed_at: "2024-01-20T14:30:00Z",
-          reminder_count: 1,
-          last_reminder_sent: "2024-01-18T09:00:00Z",
-          survey_token: "token-sarah-123",
-          responses_summary: {
-            total_questions: 48,
-            completed_questions: 48,
-            overall_score: 4.2,
-          },
-        },
-        {
-          id: "ref-2",
-          referee_name: "Mike Chen",
-          referee_email: "mike.chen@example.com",
-          relationship: "Peer Colleague",
-          status: "COMPLETED",
-          invited_at: "2024-01-16T10:00:00Z",
-          expires_at: "2024-02-16T10:00:00Z",
-          completed_at: "2024-01-22T16:45:00Z",
-          reminder_count: 0,
-          survey_token: "token-mike-456",
-          responses_summary: {
-            total_questions: 48,
-            completed_questions: 48,
-            overall_score: 3.8,
-          },
-        },
-        {
-          id: "ref-3",
-          referee_name: "Jennifer Adams",
-          referee_email: "jennifer.adams@example.com",
-          relationship: "Direct Report",
-          status: "PENDING",
-          invited_at: "2024-01-16T10:00:00Z",
-          expires_at: "2024-02-16T10:00:00Z",
-          reminder_count: 2,
-          last_reminder_sent: "2024-01-25T10:00:00Z",
-          survey_token: "token-jennifer-789",
-        },
-        {
-          id: "ref-4",
-          referee_name: "David Martinez",
-          referee_email: "david.martinez@example.com",
-          relationship: "Project Collaborator",
-          status: "EXPIRED",
-          invited_at: "2024-01-16T10:00:00Z",
-          expires_at: "2024-01-30T10:00:00Z",
-          reminder_count: 3,
-          last_reminder_sent: "2024-01-28T10:00:00Z",
-          survey_token: "token-david-101",
-        },
-      ]
-
-      setAssessment(mockAssessment)
-      setInvitations(mockInvitations)
     } catch (error) {
       console.error("Error fetching assessment data:", error)
     } finally {

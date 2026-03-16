@@ -1,22 +1,46 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FileText, Download } from "lucide-react"
-
-// This would come from your database in a real implementation
-const mockReports = [
-  {
-    id: "1",
-    title: "Coachability Assessment - May 2023",
-    createdAt: "2023-05-20T15:30:00Z",
-    refereeCount: 3,
-    status: "Complete",
-  },
-]
+import { FileText, Download, Loader2 } from "lucide-react"
+import { useSession } from "@/components/auth-provider"
 
 export default function ReportsPage() {
-  // In a real implementation, this would fetch data from your API
-  const reports = mockReports
+  const { data: session } = useSession()
+  const [reports, setReports] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (session?.user?.id) fetchReports()
+  }, [session])
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch("/api/dashboard")
+      if (res.ok) {
+        const data = await res.json()
+        // Filter to only completed assessments (those that can have reports)
+        const completed = (data.assessments || []).filter(
+          (a: any) => a.status === "COMPLETED"
+        )
+        setReports(completed)
+      }
+    } catch (error) {
+      console.error("Error fetching reports:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4 py-8">
@@ -41,23 +65,24 @@ export default function ReportsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {reports.map((report) => (
+              {reports.map((report: any) => (
                 <div key={report.id} className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center gap-4">
                     <div className="rounded-full bg-primary/10 p-2">
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-medium">{report.title}</h3>
+                      <h3 className="font-medium">{report.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Created on {new Date(report.createdAt).toLocaleDateString()} • {report.refereeCount} referee
-                        {report.refereeCount !== 1 ? "s" : ""}
+                        Completed {new Date(report.updated_at || report.created_at).toLocaleDateString()} •{" "}
+                        {report.referee_count || 0} referee{report.referee_count !== 1 ? "s" : ""}
+                        {report.completion_rate != null && ` • ${report.completion_rate}% complete`}
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Link href={`/dashboard/reports/${report.id}`}>
-                      <Button variant="outline">View</Button>
+                      <Button variant="outline">View Report</Button>
                     </Link>
                     <Button variant="outline" size="icon">
                       <Download className="h-4 w-4" />

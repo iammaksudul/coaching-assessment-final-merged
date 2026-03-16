@@ -331,7 +331,18 @@ export default function RefereeSurveyPage() {
 
     setIsSubmitting(true)
     try {
+      // Save to localStorage as backup
       await saveResponses(token, responses)
+      // Submit to server DB
+      const res = await fetch("/api/referee-survey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, responses }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Submission failed")
+      }
       toast({
         title: "Survey Submitted Successfully!",
         description: `Thank you for providing feedback about ${surveyData.candidate_name}. Your responses have been recorded.`,
