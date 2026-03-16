@@ -1,6 +1,12 @@
 import { ServerClient } from "postmark"
 
-const postmarkClient = new ServerClient(process.env.POSTMARK_API_TOKEN || "")
+let _postmarkClient: ServerClient | null = null
+function getPostmarkClient() {
+  if (!_postmarkClient && process.env.POSTMARK_API_TOKEN) {
+    _postmarkClient = new ServerClient(process.env.POSTMARK_API_TOKEN)
+  }
+  return _postmarkClient
+}
 
 export interface EmailTemplate {
   to: string
@@ -20,7 +26,9 @@ export async function sendEmail(template: EmailTemplate) {
   }
 
   try {
-    const result = await postmarkClient.sendEmail({
+    const client = getPostmarkClient()
+    if (!client) throw new Error("Postmark client not initialized")
+    const result = await client.sendEmail({
       From: template.from || DEFAULT_FROM,
       To: template.to,
       Subject: template.subject,
@@ -454,6 +462,25 @@ export function createRefereeReminderEmail(data: {
     htmlBody,
     tag: "referee-reminder",
   }
+}
+
+// Convenience wrapper: send a referee reminder email directly
+export async function sendRefereeReminderEmail(data: {
+  refereeEmail: string
+  refereeName: string
+  candidateName: string
+  assessmentName: string
+  customMessage?: string
+  surveyUrl: string
+}) {
+  const template = createRefereeReminderEmail({
+    refereeName: data.refereeName,
+    candidateName: data.candidateName,
+    relationship: "colleague",
+    surveyLink: data.surveyUrl,
+    daysRemaining: 7,
+  })
+  return sendEmail({ ...template, to: data.refereeEmail })
 }
 
 // Utility function to strip HTML for text version

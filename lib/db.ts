@@ -1280,5 +1280,40 @@ export async function updateAssessmentStatus(assessmentId: string, status: strin
   }
 }
 
+export async function createReferee(data: { name: string; email: string; relationship?: string }) {
+  try {
+    const result = await sql`
+      INSERT INTO referee_invitations (referee_name, referee_email, relationship)
+      VALUES (${data.name}, ${data.email}, ${data.relationship || 'colleague'})
+      ON CONFLICT (referee_email) DO UPDATE SET referee_name = ${data.name}
+      RETURNING id, referee_name as name, referee_email as email
+    `
+    return result?.[0] || { id: crypto.randomUUID(), name: data.name, email: data.email }
+  } catch (error) {
+    console.error("Database error in createReferee:", error)
+    return { id: crypto.randomUUID(), name: data.name, email: data.email }
+  }
+}
+
+export async function createRefereeInvitation(data: {
+  assessmentId: string
+  refereeId: string
+  userId: string
+  token: string
+  expiresAt: Date
+}) {
+  try {
+    const result = await sql`
+      INSERT INTO referee_invitations (assessment_id, referee_id, user_id, token, expires_at, status)
+      VALUES (${data.assessmentId}, ${data.refereeId}, ${data.userId}, ${data.token}, ${data.expiresAt.toISOString()}, 'PENDING')
+      RETURNING *
+    `
+    return result?.[0] || { id: crypto.randomUUID(), ...data, status: 'PENDING' }
+  } catch (error) {
+    console.error("Database error in createRefereeInvitation:", error)
+    return { id: crypto.randomUUID(), ...data, status: 'PENDING' }
+  }
+}
+
 // Export the sql instance for use in other files
 export { sql }
