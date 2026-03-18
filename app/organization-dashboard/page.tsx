@@ -166,124 +166,91 @@ export default function OrganizationDashboard() {
   const loadDashboardData = async () => {
     setLoading(true)
     try {
-      // Mock data for employer preview
-      setSponsoredAssessments([
-        {
-          id: "sa-1",
-          candidate_name: "Alex Johnson",
-          candidate_email: "alex.johnson@preview.com",
-          assessment_name: "Executive Leadership Coachability Assessment",
-          status: "PENDING",
-          requested_at: "2024-02-01T09:00:00Z",
-          completed_at: null,
-          responded_at: null,
-          decline_message: null,
-          is_archived: false,
-          archived_at: null,
-        },
-        {
-          id: "sa-2",
-          candidate_name: "Emily Davis",
-          candidate_email: "emily.davis@company.com",
-          assessment_name: "Team Lead Coachability Assessment",
-          status: "ACCEPTED",
-          requested_at: "2024-01-15T10:00:00Z",
-          completed_at: null,
-          responded_at: "2024-01-16T14:30:00Z",
-          decline_message: null,
-          is_archived: false,
-          archived_at: null,
-        },
-        {
-          id: "sa-3",
-          candidate_name: "Robert Kim",
-          candidate_email: "robert.kim@company.com",
-          assessment_name: "Manager Development Assessment",
-          status: "COMPLETED",
-          requested_at: "2024-01-05T08:00:00Z",
-          completed_at: "2024-01-20T16:00:00Z",
-          responded_at: "2024-01-06T09:00:00Z",
-          decline_message: null,
-          is_archived: false,
-          archived_at: null,
-        },
-        {
-          id: "sa-4",
-          candidate_name: "Maria Santos",
-          candidate_email: "maria.santos@external.com",
-          assessment_name: "Executive Leadership Coachability Assessment",
-          status: "DECLINED",
-          requested_at: "2024-01-10T11:00:00Z",
-          completed_at: null,
-          responded_at: "2024-01-12T08:15:00Z",
-          decline_message:
-            "Thank you for the opportunity, but I am currently engaged in another assessment process and would prefer not to take on additional evaluations at this time.",
-          is_archived: false,
-          archived_at: null,
-        },
+      const [statsRes, sponsoredRes, accessRes] = await Promise.all([
+        fetch("/api/employer/stats"),
+        fetch("/api/employer/sponsored-assessments"),
+        fetch("/api/employer/assessment-requests"),
       ])
 
-      setAccessRequests([
-        {
-          id: "ar-1",
-          candidate_name: "Sarah Wilson",
-          candidate_email: "sarah.wilson@preview.com",
-          assessment_name: "Coachability Assessment - Q4 2024",
-          status: "APPROVED",
-          requested_at: "2024-01-20T10:00:00Z",
-          resolved_at: "2024-01-21T14:00:00Z",
-        },
-        {
-          id: "ar-2",
-          candidate_name: "David Park",
-          candidate_email: "david.park@external.com",
-          assessment_name: "Leadership Coachability Assessment",
-          status: "PENDING",
-          requested_at: "2024-02-05T09:00:00Z",
-          resolved_at: null,
-        },
-      ])
+      if (sponsoredRes.ok) {
+        const data = await sponsoredRes.json()
+        setSponsoredAssessments(
+          (data || []).map((a: any) => ({
+            id: a.id,
+            candidate_name: a.candidate_name || a.candidate_email,
+            candidate_email: a.candidate_email,
+            assessment_name: a.assessment_name || "Coachability Assessment",
+            status: a.status || "PENDING",
+            requested_at: a.created_at || new Date().toISOString(),
+            completed_at: a.completed_at || null,
+            responded_at: a.responded_at || null,
+            decline_message: a.decline_message || null,
+            is_archived: a.is_archived || false,
+            archived_at: a.archived_at || null,
+          }))
+        )
+      }
 
-      setReports([
-        {
-          id: "rpt-1",
-          candidate_name: "Robert Kim",
-          assessment_name: "Manager Development Assessment",
-          completed_at: "2024-01-20T16:00:00Z",
-          source: "Commissioned",
-          shared: true,
-          is_archived: false,
-          archived_at: null,
-        },
-        {
-          id: "rpt-2",
-          candidate_name: "Sarah Wilson",
-          assessment_name: "Coachability Assessment - Q4 2024",
-          completed_at: "2023-12-15T12:00:00Z",
-          source: "Shared (Access Granted)",
-          shared: true,
-          is_archived: false,
-          archived_at: null,
-        },
-      ])
+      if (accessRes.ok) {
+        const data = await accessRes.json()
+        setAccessRequests(
+          (data || []).map((a: any) => ({
+            id: a.id,
+            candidate_name: a.candidate_name || a.candidate_email,
+            candidate_email: a.candidate_email,
+            assessment_name: a.assessment_name || "Assessment",
+            status: a.status || "PENDING",
+            requested_at: a.requested_at || a.created_at || new Date().toISOString(),
+            resolved_at: a.resolved_at || null,
+          }))
+        )
+      }
 
-      setSubscription({
-        tier: "TIER_6_12",
-        tier_name: "Professional",
-        status: "ACTIVE",
-        billing_cycle: "monthly",
-        assessments_used: 4,
-        assessments_limit: 12,
-        bonus_credits: 0,
-        amount: 89,
-        next_billing_date: "2024-03-01T00:00:00Z",
-        stripe_customer_id: "cus_mock_123",
-      })
+      if (statsRes.ok) {
+        const s = await statsRes.json()
+        setSubscription({
+          tier: s.subscriptionTier || "FREE",
+          tier_name: getTierDisplayName(s.subscriptionTier || "FREE"),
+          status: "ACTIVE",
+          billing_cycle: "monthly",
+          assessments_used: s.assessmentsUsedThisPeriod || 0,
+          assessments_limit: s.assessmentsAllowedThisPeriod || 5,
+          bonus_credits: 0,
+          amount: getTierPrice(s.subscriptionTier || "FREE"),
+          next_billing_date: s.periodEndsAt || new Date(Date.now() + 30 * 86400000).toISOString(),
+          stripe_customer_id: null,
+        })
+      } else {
+        // Fallback defaults
+        setSubscription({
+          tier: "FREE", tier_name: "Free", status: "ACTIVE", billing_cycle: "monthly",
+          assessments_used: 0, assessments_limit: 5, bonus_credits: 0, amount: 0,
+          next_billing_date: new Date(Date.now() + 30 * 86400000).toISOString(), stripe_customer_id: null,
+        })
+      }
+
+      // Reports: fetch completed sponsored assessments as reports
+      setReports([])
     } catch (error) {
       console.error("Failed to load dashboard data:", error)
+      setSubscription({
+        tier: "FREE", tier_name: "Free", status: "ACTIVE", billing_cycle: "monthly",
+        assessments_used: 0, assessments_limit: 5, bonus_credits: 0, amount: 0,
+        next_billing_date: new Date(Date.now() + 30 * 86400000).toISOString(), stripe_customer_id: null,
+      })
     } finally {
       setLoading(false)
     }
+  }
+
+  const getTierDisplayName = (tier: string) => {
+    const t = SUBSCRIPTION_TIERS.find((t) => t.id === tier)
+    return t?.name || "Free"
+  }
+
+  const getTierPrice = (tier: string) => {
+    const t = SUBSCRIPTION_TIERS.find((t) => t.id === tier)
+    return t?.monthly || 0
   }
 
   // --- Candidate Email Lookup ---
