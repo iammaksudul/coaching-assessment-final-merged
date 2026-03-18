@@ -159,8 +159,7 @@ export function EmployerDashboard() {
   })
 
   useEffect(() => {
-    // In production, fetch real data from API
-    // For now, we use mock data
+    // Subscription tier data loaded via stats endpoint
   }, [])
 
   // ADD FUNCTION TO CHECK LIMITS BEFORE OPENING DIALOGS
@@ -211,54 +210,37 @@ export function EmployerDashboard() {
     setIsLoading(true)
 
     try {
-      // In production, call the API
-      // const response = await fetch("/api/assessments/commission", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(commissionForm),
-      // })
+      const response = await fetch("/api/assessments/commission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(commissionForm),
+      })
 
-      // Mock success
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json()
 
-      const newAssessment: SponsoredAssessment = {
-        id: `sa-${Date.now()}`,
-        assessment_id: `asmt-${Date.now()}`,
-        candidate_email: commissionForm.candidateEmail,
-        candidate_name: commissionForm.candidateName,
-        status: "PENDING",
-        assessment_name: commissionForm.assessmentName || "Coachability Assessment",
-        assessment_status: "NOT_STARTED",
-        organization_name: "Preview Organization",
-        sponsored_by_name: "John Smith",
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to commission assessment")
       }
 
-      setSponsoredAssessments([newAssessment, ...sponsoredAssessments])
-      setStats({
-        ...stats,
-        assessmentsCommissioned: stats.assessmentsCommissioned + 1,
-        assessmentsPending: stats.assessmentsPending + 1,
-        assessmentsUsedThisPeriod: stats.assessmentsUsedThisPeriod + 1,
-      })
+      // Refresh data from server
+      const [freshStats, freshSponsored] = await Promise.all([
+        fetch("/api/employer/stats").then(r => r.ok ? r.json() : stats),
+        fetch("/api/employer/sponsored-assessments").then(r => r.ok ? r.json() : sponsoredAssessments),
+      ])
+      setStats(freshStats)
+      setSponsoredAssessments(freshSponsored)
 
       toast({
         title: "Success",
         description: `Assessment commissioned for ${commissionForm.candidateName}. Invitation email sent.`,
       })
 
-      setCommissionForm({
-        candidateName: "",
-        candidateEmail: "",
-        assessmentName: "",
-        message: "",
-      })
+      setCommissionForm({ candidateName: "", candidateEmail: "", assessmentName: "", message: "" })
       setIsCommissionDialogOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to commission assessment. Please try again.",
+        description: error.message || "Failed to commission assessment. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -279,41 +261,26 @@ export function EmployerDashboard() {
     setIsSearching(true)
 
     try {
-      // In production, call the API to search for candidate
-      // const response = await fetch(`/api/candidates/search?email=${candidateSearchEmail}`)
+      const response = await fetch("/api/candidates/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidates: [{ email: candidateSearchEmail }] }),
+      })
 
-      // Mock search results
-      await new Promise((resolve) => setTimeout(resolve, 800))
+      const data = await response.json()
+      const validation = data.validations?.[0]
 
-      // Mock candidate with multiple assessments
-      const mockAssessments = [
-        {
-          id: "asmt-101",
-          name: "Q4 2024 Leadership Assessment",
-          completed_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "COMPLETED",
-        },
-        {
-          id: "asmt-102",
-          name: "Executive Coaching Assessment",
-          completed_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "COMPLETED",
-        },
-        {
-          id: "asmt-103",
-          name: "Career Development Assessment",
-          completed_at: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "COMPLETED",
-        },
-      ]
-
-      setCandidateAssessments(mockAssessments)
-      setCandidateFound(true)
-
-      if (mockAssessments.length === 0) {
+      if (validation?.exists && validation.existingAssessments?.length > 0) {
+        setCandidateAssessments(validation.existingAssessments)
+        setCandidateFound(true)
+      } else {
+        setCandidateAssessments([])
+        setCandidateFound(false)
         toast({
           title: "No Assessments Found",
-          description: "This candidate has no completed assessments available.",
+          description: validation?.exists
+            ? "This candidate has no completed assessments available."
+            : "No candidate found with this email address.",
           variant: "destructive",
         })
       }
@@ -344,30 +311,30 @@ export function EmployerDashboard() {
     setIsLoading(true)
 
     try {
-      // In production, call the API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       const selectedAssessment = candidateAssessments.find((a) => a.id === selectedAssessmentId)
 
-      const newRequest: AccessRequest = {
-        id: `ar-${Date.now()}`,
-        assessment_id: selectedAssessmentId,
-        candidate_email: candidateSearchEmail,
-        candidate_name: "Candidate Name", // Would come from DB lookup
-        assessment_name: selectedAssessment?.name || "Assessment",
-        status: "PENDING",
-        requested_by_name: "John Smith",
-        organization_name: "Preview Organization",
-        requested_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      const response = await fetch("/api/employer/assessment-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assessmentId: selectedAssessmentId,
+          candidateEmail: candidateSearchEmail,
+          message: accessRequestForm.message,
+        }),
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || "Failed to send access request")
       }
 
-      setAccessRequests([newRequest, ...accessRequests])
-      setStats({
-        ...stats,
-        accessRequestsSent: stats.accessRequestsSent + 1,
-        accessRequestsPending: stats.accessRequestsPending + 1,
-      })
+      // Refresh data from server
+      const [freshStats, freshRequests] = await Promise.all([
+        fetch("/api/employer/stats").then(r => r.ok ? r.json() : stats),
+        fetch("/api/employer/assessment-requests").then(r => r.ok ? r.json() : accessRequests),
+      ])
+      setStats(freshStats)
+      setAccessRequests(freshRequests)
 
       toast({
         title: "Success",
