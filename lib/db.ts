@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless"
+import { Pool } from "pg"
 
 // Check if we're in preview mode
 const isPreviewMode = !process.env.DATABASE_URL
@@ -6,15 +7,26 @@ const isPreviewMode = !process.env.DATABASE_URL
 let sql: any
 
 if (isPreviewMode) {
-  // Mock database functions for preview mode
   sql = () => Promise.resolve([])
   console.log("Running in preview mode - database functions are mocked")
-} else {
+} else if (process.env.DATABASE_URL?.includes("neon") || process.env.DATABASE_URL?.includes("neon.tech")) {
+  // Neon serverless (HTTP-based)
   try {
     sql = neon(process.env.DATABASE_URL!)
   } catch (error) {
-    console.error("Failed to initialize database connection:", error)
+    console.error("Failed to initialize Neon connection:", error)
     sql = () => Promise.resolve([])
+  }
+} else {
+  // Standard PostgreSQL via pg
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  sql = async (strings: TemplateStringsArray, ...values: any[]) => {
+    let text = ""
+    strings.forEach((s, i) => {
+      text += s + (i < values.length ? `$${i + 1}` : "")
+    })
+    const result = await pool.query(text, values)
+    return result.rows
   }
 }
 
