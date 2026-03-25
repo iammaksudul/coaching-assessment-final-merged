@@ -1295,10 +1295,9 @@ export async function updateAssessmentStatus(assessmentId: string, status: strin
 export async function createReferee(data: { name: string; email: string; relationship?: string }) {
   try {
     const result = await sql`
-      INSERT INTO referee_invitations (referee_name, referee_email, relationship)
+      INSERT INTO referees (name, email, relationship)
       VALUES (${data.name}, ${data.email}, ${data.relationship || 'colleague'})
-      ON CONFLICT (referee_email) DO UPDATE SET referee_name = ${data.name}
-      RETURNING id, referee_name as name, referee_email as email
+      RETURNING id, name, email
     `
     return result?.[0] || { id: crypto.randomUUID(), name: data.name, email: data.email }
   } catch (error) {
@@ -1313,11 +1312,14 @@ export async function createRefereeInvitation(data: {
   userId: string
   token: string
   expiresAt: Date
+  refereeName?: string
+  refereeEmail?: string
+  relationship?: string
 }) {
   try {
     const result = await sql`
-      INSERT INTO referee_invitations (assessment_id, referee_id, user_id, token, expires_at, status)
-      VALUES (${data.assessmentId}, ${data.refereeId}, ${data.userId}, ${data.token}, ${data.expiresAt.toISOString()}, 'PENDING')
+      INSERT INTO referee_invitations (assessment_id, referee_id, user_id, token, expires_at, status, referee_name, referee_email, relationship)
+      VALUES (${data.assessmentId}, ${data.refereeId}, ${data.userId}, ${data.token}, ${data.expiresAt.toISOString()}, 'PENDING', ${data.refereeName || null}, ${data.refereeEmail || null}, ${data.relationship || null})
       RETURNING *
     `
     return result?.[0] || { id: crypto.randomUUID(), ...data, status: 'PENDING' }

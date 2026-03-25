@@ -54,6 +54,9 @@ export async function POST(req: Request) {
         userId: session.user.id,
         token,
         expiresAt,
+        refereeName: refereeData.name,
+        refereeEmail: refereeData.email,
+        relationship: refereeData.relationship,
       })
 
       createdInvitations.push({

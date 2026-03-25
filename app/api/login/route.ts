@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getUserByEmail } from "@/lib/db"
-import { simpleCompare } from "@/lib/auth-utils"
+import bcrypt from "bcryptjs"
 
 export async function POST(req: Request) {
   try {
@@ -10,11 +10,12 @@ export async function POST(req: Request) {
     }
 
     const user = await getUserByEmail(email)
-    if (!user) {
+    if (!user || !user.password) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    if (!user.password || !simpleCompare(password, user.password)) {
+    const valid = await bcrypt.compare(password, user.password)
+    if (!valid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
