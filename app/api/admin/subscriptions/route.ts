@@ -23,18 +23,10 @@ export async function GET(req: Request) {
     const subscriptions = await sql`
       SELECT 
         s.*,
-        u.email as subscriber_email,
-        u.name as subscriber_name,
-        o.name as organization_name,
-        COUNT(a.id) as total_assessments,
-        COUNT(CASE WHEN a.created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 END) as current_month_assessments
+        o.name as organization_name
       FROM subscriptions s
-      LEFT JOIN users u ON s.user_id = u.id
       LEFT JOIN organizations o ON s.organization_id = o.id
-      LEFT JOIN assessments a ON (s.organization_id IS NOT NULL AND a.sponsored_by_organization = s.organization_id) 
-                              OR (s.organization_id IS NULL AND a.user_id = s.user_id)
-      GROUP BY s.id, u.email, u.name, o.name
-      ORDER BY u.email ASC
+      ORDER BY s.created_at DESC
     `
 
     return NextResponse.json({ subscriptions })
