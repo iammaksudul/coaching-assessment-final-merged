@@ -5,7 +5,7 @@ import { NextResponse } from "next/server"
 // API docs: https://postmarkapp.com/developer/api/email-api
 
 const RECIPIENT_EMAIL = "todd@guidingstarcc.com"
-const FROM_EMAIL = "noreply@coachingdigs.com" // Must be verified in Postmark
+const FROM_EMAIL = "info@coachingdigs.com" // Verified in Postmark
 
 interface ContactFormData {
   name: string
