@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
+import { getAuthUser } from "@/lib/get-auth-user"
 import { sql } from "@/lib/db"
 import Stripe from "stripe"
 
@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder"
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession()
+    const session = { user: await getAuthUser(request) }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

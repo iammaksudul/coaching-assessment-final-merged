@@ -52,6 +52,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Check for existing session on mount
+  // Patch fetch to auto-add x-user-id for API calls
+  useEffect(() => {
+    const originalFetch = window.fetch
+    window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url
+      if (url.startsWith("/api/")) {
+        const headers = new Headers(init?.headers)
+        if (!headers.has("x-user-id")) {
+          try {
+            const stored = localStorage.getItem("preview-user")
+            if (stored) {
+              const u = JSON.parse(stored)
+              if (u?.id) headers.set("x-user-id", u.id)
+            }
+          } catch {}
+        }
+        return originalFetch(input, { ...init, headers })
+      }
+      return originalFetch(input, init)
+    }
+    return () => { window.fetch = originalFetch }
+  }, [])
+
   useEffect(() => {
     const checkExistingSession = () => {
       try {
@@ -75,20 +98,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Check if it's a test account
+    // Check test accounts first (preview mode)
     const testAccount = testAccounts[email as keyof typeof testAccounts]
     if (testAccount && password === "password123") {
       setUser(testAccount)
       localStorage.setItem("preview-user", JSON.stringify(testAccount))
-      console.log("User signed in:", testAccount)
       setIsLoading(false)
       return true
     }
 
-    // For any other email, create a mock user (for demo purposes)
+    // Try real DB login
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.user) {
+          setUser(data.user)
+          localStorage.setItem("preview-user", JSON.stringify(data.user))
+          setIsLoading(false)
+          return true
+        }
+      }
+    } catch {}
+
+    // Fallback: create mock user for demo
     if (email && password) {
       const mockUser = {
         id: `user-${Date.now()}`,
@@ -102,7 +139,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(mockUser)
       localStorage.setItem("preview-user", JSON.stringify(mockUser))
-      console.log("Mock user created:", mockUser)
       setIsLoading(false)
       return true
     }

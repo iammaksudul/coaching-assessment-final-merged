@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
+import { getAuthUser } from "@/lib/get-auth-user"
 import { sql, getUserOrganizations } from "@/lib/db"
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession()
+    const session = { user: await getAuthUser(req) }
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -48,7 +48,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession()
+    const session = { user: await getAuthUser(req) }
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
