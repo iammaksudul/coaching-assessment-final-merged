@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    if (!user.password_hash || !simpleCompare(password, user.password_hash)) {
+    if (!user.password || !simpleCompare(password, user.password)) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
