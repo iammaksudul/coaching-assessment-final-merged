@@ -30,49 +30,31 @@ export default function RefereeDashboardPage() {
       return
     }
 
-    // Mock referee invitations for Sarah Wilson
-    const mockInvitations = [
-      {
-        id: "ref-inv-1",
-        candidate_name: "Alex Johnson",
-        candidate_email: "alex.johnson@preview.com",
-        assessment_name: "Leadership Development Assessment",
-        organization_name: "Preview Organization",
-        invited_by: "John Smith",
-        status: "PENDING",
-        invited_at: "2024-01-20T10:00:00Z",
-        expires_at: "2024-02-20T10:00:00Z",
-        survey_token: "survey-token-alex-123",
-      },
-      {
-        id: "ref-inv-2",
-        candidate_name: "Mike Chen",
-        candidate_email: "mike.chen@preview.com",
-        assessment_name: "Executive Coaching Assessment",
-        organization_name: "Tech Solutions Inc",
-        invited_by: "Lisa Park",
-        status: "COMPLETED",
-        invited_at: "2024-01-15T14:30:00Z",
-        completed_at: "2024-01-18T16:45:00Z",
-        survey_token: "survey-token-mike-456",
-      },
-      {
-        id: "ref-inv-3",
-        candidate_name: "Jennifer Adams",
-        candidate_email: "jennifer.adams@preview.com",
-        assessment_name: "Management Development Assessment",
-        organization_name: null,
-        invited_by: "Jennifer Adams",
-        status: "PENDING",
-        invited_at: "2024-02-01T09:15:00Z",
-        expires_at: "2024-03-01T09:15:00Z",
-        survey_token: "survey-token-jennifer-789",
-      },
-    ]
-
-    setRefereeInvitations(mockInvitations)
-    setIsLoading(false)
-    setIsInitialized(true)
+    const fetchInvitations = async () => {
+      try {
+        const res = await fetch("/api/dashboard")
+        if (res.ok) {
+          const data = await res.json()
+          const invitations = (data.refereeInvitations || []).map((r: any) => ({
+            id: r.id,
+            candidate_name: r.candidate_name || "Unknown",
+            candidate_email: r.candidate_email || "",
+            assessment_name: r.assessment_name || "Assessment",
+            organization_name: r.organization_name || null,
+            invited_by: r.invited_by || "",
+            status: r.status || "PENDING",
+            invited_at: r.created_at || r.invited_at,
+            expires_at: r.expires_at,
+            completed_at: r.completed_at,
+            survey_token: r.token || r.survey_token,
+          }))
+          setRefereeInvitations(invitations)
+        }
+      } catch {}
+      setIsLoading(false)
+      setIsInitialized(true)
+    }
+    fetchInvitations()
   }, [user, handleRedirect, isInitialized])
 
   if (!isInitialized || isLoading) {

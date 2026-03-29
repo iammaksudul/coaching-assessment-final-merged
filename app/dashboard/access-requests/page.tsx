@@ -33,36 +33,26 @@ export default function AccessRequestsPage() {
 
   useEffect(() => {
     if (!user) return
-
-    // Show requests for Alex Johnson
-    if (user.email === "alex.johnson@preview.com") {
-      const alexRequests = [
-        {
-          id: "test-access-request-1",
-          organizationName: "Preview Organization",
-          requestedByName: "John Smith",
-          requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          assessmentName: "Leadership Development Assessment",
-          requestMessage:
-            "We would like to review your Leadership Development Assessment as part of our hiring evaluation process.",
-          expiresAt: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "PENDING",
-        },
-        {
-          id: "test-access-request-2",
-          organizationName: "Tech Innovations Inc",
-          requestedByName: "Sarah Wilson",
-          requestedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          assessmentName: "Q1 Performance Review",
-          requestMessage: "We're considering you for a senior role and would like to review your recent assessment.",
-          expiresAt: new Date(Date.now() + 23 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "PENDING",
-        },
-      ]
-      setRequests(alexRequests)
-    } else {
-      setRequests([])
+    const fetchRequests = async () => {
+      try {
+        const res = await fetch("/api/user/access-requests")
+        if (res.ok) {
+          const data = await res.json()
+          const incoming = (data.incoming || data || []).map((r: any) => ({
+            id: r.id,
+            organizationName: r.organization_name || r.organizationName || "Unknown",
+            requestedByName: r.requested_by_name || r.requestedByName || "Unknown",
+            requestedAt: r.requested_at || r.requestedAt || r.created_at,
+            assessmentName: r.assessment_name || r.assessmentName || "Assessment",
+            requestMessage: r.request_message || r.requestMessage || "",
+            expiresAt: r.expires_at || r.expiresAt,
+            status: r.status || "PENDING",
+          }))
+          setRequests(incoming)
+        }
+      } catch {}
     }
+    fetchRequests()
   }, [user])
 
   const handleRequestClick = (request: AccessRequest) => {

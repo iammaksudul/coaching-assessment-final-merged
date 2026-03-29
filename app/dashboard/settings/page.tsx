@@ -62,12 +62,12 @@ export default function SettingsPage() {
       const result = await res.json()
       if (res.ok) {
         // Update localStorage so auth-provider picks up new name/email
-        const stored = localStorage.getItem("preview-user")
+        const stored = localStorage.getItem("auth-user")
         if (stored) {
           const u = JSON.parse(stored)
           u.name = data.name
           u.email = data.email
-          localStorage.setItem("preview-user", JSON.stringify(u))
+          localStorage.setItem("auth-user", JSON.stringify(u))
         }
         toast({ title: "Profile updated", description: result.message })
       } else {

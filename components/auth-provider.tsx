@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const headers = new Headers(init?.headers)
         if (!headers.has("x-user-id")) {
           try {
-            const stored = localStorage.getItem("preview-user")
+            const stored = localStorage.getItem("auth-user")
             if (stored) {
               const u = JSON.parse(stored)
               if (u?.id) headers.set("x-user-id", u.id)
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkExistingSession = () => {
       try {
-        const storedUser = localStorage.getItem("preview-user")
+        const storedUser = localStorage.getItem("auth-user")
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser)
           console.log("Restored user session:", parsedUser)
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error restoring session:", error)
-        localStorage.removeItem("preview-user")
+        localStorage.removeItem("auth-user")
       } finally {
         setIsLoading(false)
       }
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json()
         if (data.user) {
           setUser(data.user)
-          localStorage.setItem("preview-user", JSON.stringify(data.user))
+          localStorage.setItem("auth-user", JSON.stringify(data.user))
           setIsLoading(false)
           return true
         }
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = () => {
     console.log("User signed out:", user)
     setUser(null)
-    localStorage.removeItem("preview-user")
+    localStorage.removeItem("auth-user")
 
     // Graceful redirect to home page
     router.push("/")

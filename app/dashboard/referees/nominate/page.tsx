@@ -32,53 +32,6 @@ interface PoolReferee {
   created_at: string
 }
 
-// Preview pool data keyed by user id
-const userRefereePool: Record<string, PoolReferee[]> = {
-  "alex-johnson-preview": [
-    {
-      id: "ref-1",
-      name: "Maria Lopez",
-      email: "maria.lopez@preview.com",
-      relationship: "Manager",
-      status: "ACTIVE",
-      created_at: "2024-01-16T10:00:00Z",
-    },
-    {
-      id: "ref-2",
-      name: "Tom Harris",
-      email: "tom.harris@preview.com",
-      relationship: "Colleague",
-      status: "ACTIVE",
-      created_at: "2024-01-17T14:30:00Z",
-    },
-    {
-      id: "ref-3",
-      name: "Priya Patel",
-      email: "priya.patel@preview.com",
-      relationship: "Direct Report",
-      status: "ACTIVE",
-      created_at: "2024-01-18T09:15:00Z",
-    },
-  ],
-  "sarah-wilson-preview": [
-    {
-      id: "ref-4",
-      name: "James Okafor",
-      email: "james.okafor@preview.com",
-      relationship: "Mentor",
-      status: "ACTIVE",
-      created_at: "2024-01-12T11:00:00Z",
-    },
-    {
-      id: "ref-5",
-      name: "Lena Kim",
-      email: "lena.kim@preview.com",
-      relationship: "Colleague",
-      status: "ACTIVE",
-      created_at: "2024-01-14T08:45:00Z",
-    },
-  ],
-}
 
 export default function NominateRefereesPage() {
   const router = useRouter()
@@ -113,9 +66,16 @@ export default function NominateRefereesPage() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    // Load existing referee pool for this user
-    const pool = userRefereePool[user.id] || []
-    setPoolReferees(pool)
+    const fetchPool = async () => {
+      try {
+        const res = await fetch("/api/referees/pool")
+        if (res.ok) {
+          const data = await res.json()
+          setPoolReferees(data.map((r: any, i: number) => ({ id: `pool-${i}`, ...r, status: r.status || "ACTIVE" })))
+        }
+      } catch {}
+    }
+    fetchPool()
   }, [user, authLoading])
 
   const allEmails = [

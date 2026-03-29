@@ -66,94 +66,28 @@ export default function SubscriptionsPage() {
 
   const fetchSubscriptions = async () => {
     try {
-      // Mock subscription data
-      const mockSubscriptions: Subscription[] = [
-        {
-          id: "sub_1",
-          organization_name: "TechCorp Solutions",
-          plan_name: "Professional Plan",
-          status: "ACTIVE",
-          current_period_start: "2024-01-01T00:00:00Z",
-          current_period_end: "2024-02-01T00:00:00Z",
-          monthly_amount: 299,
-          assessments_used: 12,
-          assessments_limit: 25,
-          created_at: "2023-12-01T00:00:00Z",
-          last_payment_date: "2024-01-01T00:00:00Z",
-          next_payment_date: "2024-02-01T00:00:00Z",
-          payment_method: "Visa ****4242",
-          billing_email: "billing@techcorp.com",
-          account_holder: "John Smith",
-        },
-        {
-          id: "sub_2",
-          organization_name: "Global Innovations Inc",
-          plan_name: "Enterprise Plan",
-          status: "PAST_DUE",
-          current_period_start: "2024-01-15T00:00:00Z",
-          current_period_end: "2024-02-15T00:00:00Z",
-          monthly_amount: 599,
-          assessments_used: 45,
-          assessments_limit: 100,
-          created_at: "2023-11-15T00:00:00Z",
-          last_payment_date: "2023-12-15T00:00:00Z",
-          next_payment_date: "2024-01-15T00:00:00Z",
-          payment_method: "Mastercard ****8888",
-          billing_email: "finance@globalinnovations.com",
-          account_holder: "Sarah Johnson",
-        },
-        {
-          id: "sub_3",
-          organization_name: "StartupHub",
-          plan_name: "Basic Plan",
-          status: "ACTIVE",
-          current_period_start: "2024-01-20T00:00:00Z",
-          current_period_end: "2024-02-20T00:00:00Z",
-          monthly_amount: 99,
-          assessments_used: 3,
-          assessments_limit: 10,
-          created_at: "2024-01-20T00:00:00Z",
-          last_payment_date: "2024-01-20T00:00:00Z",
-          next_payment_date: "2024-02-20T00:00:00Z",
-          payment_method: "Visa ****1234",
-          billing_email: "admin@startuphub.com",
-          account_holder: "Mike Chen",
-        },
-        {
-          id: "sub_4",
-          organization_name: "Enterprise Corp",
-          plan_name: "Professional Plan",
-          status: "SUSPENDED",
-          current_period_start: "2024-01-10T00:00:00Z",
-          current_period_end: "2024-02-10T00:00:00Z",
-          monthly_amount: 299,
-          assessments_used: 8,
-          assessments_limit: 25,
-          created_at: "2023-10-10T00:00:00Z",
-          last_payment_date: "2023-12-10T00:00:00Z",
-          payment_method: "Amex ****9999",
-          billing_email: "payments@enterprisecorp.com",
-          account_holder: "Lisa Park",
-        },
-        {
-          id: "sub_5",
-          organization_name: "Digital Solutions Ltd",
-          plan_name: "Enterprise Plan",
-          status: "CANCELED",
-          current_period_start: "2023-12-01T00:00:00Z",
-          current_period_end: "2024-01-01T00:00:00Z",
-          monthly_amount: 599,
-          assessments_used: 22,
-          assessments_limit: 100,
-          created_at: "2023-06-01T00:00:00Z",
-          last_payment_date: "2023-12-01T00:00:00Z",
-          payment_method: "Visa ****5555",
-          billing_email: "billing@digitalsolutions.com",
-          account_holder: "David Wilson",
-        },
-      ]
-
-      setSubscriptions(mockSubscriptions)
+      const res = await fetch("/api/admin/subscriptions")
+      if (res.ok) {
+        const data = await res.json()
+        const subs = (data.subscriptions || data || []).map((s: any) => ({
+          id: s.id,
+          organization_name: s.organization_name || "Unknown",
+          plan_name: s.plan_id || "Free",
+          status: (s.status || "ACTIVE").toUpperCase(),
+          current_period_start: s.current_period_start,
+          current_period_end: s.current_period_end,
+          monthly_amount: 0,
+          assessments_used: 0,
+          assessments_limit: 0,
+          created_at: s.created_at,
+          last_payment_date: s.last_payment_attempt_at,
+          next_payment_date: s.current_period_end,
+          payment_method: s.stripe_customer_id ? "Stripe" : "None",
+          billing_email: "",
+          account_holder: "",
+        }))
+        setSubscriptions(subs)
+      }
     } catch (error) {
       console.error("Error fetching subscriptions:", error)
       toast({

@@ -43,26 +43,28 @@ export function AccessRequestNotifications() {
   useEffect(() => {
     if (!user) return
 
-    // Show real request for Alex Johnson
-    if (user.email === "alex.johnson@preview.com") {
-      const alexRequests = [
-        {
-          id: "test-access-request-1",
-          organizationName: "Preview Organization",
-          requestedByName: "John Smith",
-          requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          assessmentName: "Leadership Development Assessment",
-          requestMessage:
-            "We would like to review your Leadership Development Assessment as part of our hiring evaluation process. This will help us understand your coachability profile and determine if you're a good fit for our leadership development program. We are particularly interested in understanding your growth mindset, receptiveness to feedback, and ability to adapt to new challenges. This assessment data will be used solely for evaluation purposes and will be handled in accordance with our privacy policy. We understand the sensitive nature of this information and will ensure it is only accessed by authorized personnel involved in the hiring decision. The data will be retained for the duration of the hiring process and then securely archived or deleted as per our data retention policies.",
-          expiresAt: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(), // 28 days from now
-        },
-      ]
-      setRequests(alexRequests)
-    } else {
-      setRequests([])
+    const fetchRequests = async () => {
+      try {
+        const res = await fetch("/api/user/access-requests")
+        if (res.ok) {
+          const data = await res.json()
+          const pending = (data.incoming || data || [])
+            .filter((r: any) => (r.status || "").toUpperCase() === "PENDING")
+            .map((r: any) => ({
+              id: r.id,
+              organizationName: r.organization_name || r.organizationName || "Unknown",
+              requestedByName: r.requested_by_name || r.requestedByName || "Unknown",
+              requestedAt: r.requested_at || r.created_at,
+              assessmentName: r.assessment_name || r.assessmentName || "Assessment",
+              requestMessage: r.request_message || r.requestMessage || "",
+              expiresAt: r.expires_at,
+            }))
+          setRequests(pending)
+        }
+      } catch {}
+      setLoading(false)
     }
-
-    setLoading(false)
+    fetchRequests()
   }, [user])
 
   const handleRequestClick = (request: AccessRequest) => {

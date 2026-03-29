@@ -11,25 +11,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Check if we're in preview mode
-    const isPreviewMode = !process.env.DATABASE_URL
-
-    if (isPreviewMode) {
-      // In preview mode, just return success
-      return NextResponse.json(
-        {
-          user: {
-            id: "preview-user-1",
-            name,
-            email,
-            role: "PARTICIPANT",
-          },
-          message: "User created successfully (preview mode)",
-        },
-        { status: 201 },
-      )
-    }
-
     // Check if user already exists
     const existingUser = await getUserByEmail(email)
 

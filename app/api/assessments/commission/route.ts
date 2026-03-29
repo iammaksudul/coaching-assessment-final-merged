@@ -17,59 +17,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Candidate name and email are required" }, { status: 400 })
     }
 
-    // Check if we're in preview mode
-    const isPreviewMode = !process.env.DATABASE_URL
-
     // --- Plan limit enforcement ---
-    if (!isPreviewMode) {
-      try {
-        const orgResult = await sql`
-          SELECT o.assessments_used_current_period, o.assessment_bonus_credits,
-            o.subscription_tier,
-            CASE o.subscription_tier
-              WHEN 'FREE' THEN 1
-              WHEN 'TIER_1_5' THEN 5
-              WHEN 'TIER_6_12' THEN 12
-              WHEN 'TIER_13_20' THEN 20
-              WHEN 'TIER_21_40' THEN 40
-              WHEN 'TIER_40_PLUS' THEN 999
-              ELSE 5
-            END as plan_limit
-          FROM organizations o
-          JOIN users u ON u.organization_id = o.id
-          WHERE u.id = ${userId}
-        `
-        const org = orgResult?.[0]
-        if (org) {
-          const totalCapacity = (org.plan_limit || 5) + (org.assessment_bonus_credits || 0)
-          if ((org.assessments_used_current_period || 0) >= totalCapacity) {
-            return NextResponse.json({
-              error: "You have reached your plan limit for this billing period.",
-              code: "OVER_LIMIT",
-              usage: {
-                used: org.assessments_used_current_period || 0,
-                limit: org.plan_limit || 5,
-                bonusCredits: org.assessment_bonus_credits || 0,
-                tier: org.subscription_tier,
-              },
-            }, { status: 403 })
-          }
+    try {
+      const orgResult = await sql`
+        SELECT o.assessments_used_current_period, o.assessment_bonus_credits,
+          o.subscription_tier,
+          CASE o.subscription_tier
+            WHEN 'FREE' THEN 1
+            WHEN 'TIER_1_5' THEN 5
+            WHEN 'TIER_6_12' THEN 12
+            WHEN 'TIER_13_20' THEN 20
+            WHEN 'TIER_21_40' THEN 40
+            WHEN 'TIER_40_PLUS' THEN 999
+            ELSE 5
+          END as plan_limit
+        FROM organizations o
+        JOIN users u ON u.organization_id = o.id
+        WHERE u.id = ${userId}
+      `
+      const org = orgResult?.[0]
+      if (org) {
+        const totalCapacity = (org.plan_limit || 5) + (org.assessment_bonus_credits || 0)
+        if ((org.assessments_used_current_period || 0) >= totalCapacity) {
+          return NextResponse.json({
+            error: "You have reached your plan limit for this billing period.",
+            code: "OVER_LIMIT",
+            usage: {
+              used: org.assessments_used_current_period || 0,
+              limit: org.plan_limit || 5,
+              bonusCredits: org.assessment_bonus_credits || 0,
+              tier: org.subscription_tier,
+            },
+          }, { status: 403 })
         }
-      } catch (dbErr) {
-        // If the org lookup fails (e.g. tables not seeded), allow the request to proceed
-        console.error("Org limit check failed (allowing):", dbErr)
       }
-    }
-
-    if (isPreviewMode) {
-      // In preview mode, just return success
-      return NextResponse.json({
-        success: true,
-        message: "Assessment commissioned successfully (preview mode)",
-        candidateId: "preview-candidate-1",
-        assessmentId: "preview-assessment-1",
-        invitationSent: true,
-      })
+    } catch (dbErr) {
+      console.error("Org limit check failed (allowing):", dbErr)
     }
 
     // Check if candidate already exists

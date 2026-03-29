@@ -311,11 +311,7 @@ export default function RegisterPage() {
                 </Link>
               </p>
 
-              {/* Preview mode notice */}
-              <div className="rounded-lg bg-blue-50 p-3 text-center text-sm text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                <p className="font-medium">Preview Mode</p>
-                <p>Registration will work for demonstration purposes.</p>
-              </div>
+
             </div>
           </form>
         </div>
