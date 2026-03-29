@@ -36,56 +36,37 @@ export default function RequestAccessPage() {
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return
-
     setIsSearching(true)
 
-    // Mock search results - in real app this would be an API call
-    const mockResults: CandidateAssessment[] = [
-      {
-        id: "alex-assessment-1",
-        candidate_name: "Alex Johnson",
-        candidate_email: "alex.johnson@preview.com",
-        assessment_name: "Leadership Development Assessment",
-        completed_date: "2024-01-15T10:00:00Z",
-        overall_score: 4.2,
-        status: "COMPLETED",
-        can_request_access: true,
-      },
-      {
-        id: "sarah-assessment-1",
-        candidate_name: "Sarah Wilson",
-        candidate_email: "sarah.wilson@preview.com",
-        assessment_name: "Executive Coaching Assessment",
-        completed_date: "2024-01-20T14:30:00Z",
-        overall_score: 4.6,
-        status: "COMPLETED",
-        can_request_access: true,
-      },
-      {
-        id: "john-assessment-1",
-        candidate_name: "John Smith",
-        candidate_email: "john.smith@example.com",
-        assessment_name: "360 Leadership Review",
-        completed_date: "2024-01-10T09:15:00Z",
-        overall_score: 3.8,
-        status: "COMPLETED",
-        can_request_access: false,
-        existing_request_status: "PENDING",
-      },
-    ]
-
-    // Filter based on search term
-    const filtered = mockResults.filter(
-      (result) =>
-        result.candidate_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        result.candidate_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        result.assessment_name.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-
-    setTimeout(() => {
-      setSearchResults(filtered)
-      setIsSearching(false)
-    }, 1000)
+    try {
+      const res = await fetch("/api/candidates/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidates: [{ email: searchTerm.trim() }] }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const results: CandidateAssessment[] = []
+        for (const v of (data.validations || [])) {
+          if (v.exists && v.existingAssessments) {
+            for (const a of v.existingAssessments) {
+              results.push({
+                id: a.id,
+                candidate_name: v.name || v.email,
+                candidate_email: v.email,
+                assessment_name: a.name || "Assessment",
+                completed_date: a.created_at,
+                overall_score: 0,
+                status: a.status || "COMPLETED",
+                can_request_access: a.status === "COMPLETED",
+              })
+            }
+          }
+        }
+        setSearchResults(results)
+      }
+    } catch {}
+    setIsSearching(false)
   }
 
   const handleSelectAssessment = (assessmentId: string) => {
@@ -100,18 +81,21 @@ export default function RequestAccessPage() {
     setIsSubmitting(true)
 
     try {
-      // Mock API call - in real app this would create the access requests
       const requestData = selectedAssessments.map((assessmentId) => {
         const assessment = searchResults.find((r) => r.id === assessmentId)
         return {
-          assessment_id: assessmentId,
-          candidate_name: assessment?.candidate_name,
-          candidate_email: assessment?.candidate_email,
-          assessment_name: assessment?.assessment_name,
-          request_message: requestMessage,
-          requested_at: new Date().toISOString(),
+          assessmentId,
+          candidateEmail: assessment?.candidate_email,
+          message: requestMessage,
         }
       })
+      for (const rd of requestData) {
+        await fetch("/api/employer/assessment-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rd),
+        })
+      }
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000))

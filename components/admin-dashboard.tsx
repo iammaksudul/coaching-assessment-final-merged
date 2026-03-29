@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -183,14 +183,42 @@ const STATIC_PAYMENT_ISSUES: PaymentIssue[] = [
 
 export function AdminDashboard() {
   const { toast } = useToast()
-  const [users, setUsers] = useState<User[]>(STATIC_USERS)
+  const [users, setUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [suspensionReason, setSuspensionReason] = useState("")
+  const [stats, setStats] = useState(STATIC_STATS)
+  const [paymentIssues, setPaymentIssues] = useState<PaymentIssue[]>([])
 
-  // Use static data immediately - no loading state needed
-  const stats = STATIC_STATS
-  const paymentIssues = STATIC_PAYMENT_ISSUES
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [usersRes, paymentsRes] = await Promise.all([
+          fetch("/api/admin/users"),
+          fetch("/api/admin/payments/failed"),
+        ])
+        if (usersRes.ok) {
+          const data = await usersRes.json()
+          setUsers((data.users || []).map((u: any) => ({
+            id: u.id, name: u.name || "", email: u.email || "", role: u.role || "PARTICIPANT",
+            account_type: u.account_type || "SELF_CREATED", status: "ACTIVE",
+            created_at: u.created_at, organization_name: u.organization_name,
+          })))
+          setStats((s: any) => ({ ...s, totalUsers: (data.users || []).length }))
+        }
+        if (paymentsRes.ok) {
+          const data = await paymentsRes.json()
+          setPaymentIssues((data.failedPayments || []).map((p: any) => ({
+            id: p.id, user_email: p.customer_email || "", user_name: p.customer_name || "",
+            organization_name: p.organization_name || "", amount: p.amount || 0, currency: p.currency || "USD",
+            failure_reason: p.failure_message || p.failure_code || "Unknown", failed_at: p.attempted_at,
+            retry_count: p.retry_count || 0, status: "PENDING_RETRY",
+          })))
+        }
+      } catch {}
+    }
+    fetchData()
+  }, [])
 
   // Memoize filtered users to avoid recalculation on every render
   const filteredUsers = useMemo(() => {

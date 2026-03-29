@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         }
       } catch (stripeError) {
         console.error("Stripe retry error:", stripeError)
-        // Continue with mock response for demo
+        // Continue with response
       }
     }
 

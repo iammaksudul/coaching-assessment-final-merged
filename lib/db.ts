@@ -1,24 +1,16 @@
 import { neon } from "@neondatabase/serverless"
 import { Pool } from "pg"
 
-// Check if we're in preview mode
-const isPreviewMode = !process.env.DATABASE_URL
-
 let sql: any
 
-if (isPreviewMode) {
-  sql = () => Promise.resolve([])
-  console.log("Running in preview mode - database functions are mocked")
-} else if (process.env.DATABASE_URL?.includes("neon") || process.env.DATABASE_URL?.includes("neon.tech")) {
-  // Neon serverless (HTTP-based)
+if (process.env.DATABASE_URL?.includes("neon") || process.env.DATABASE_URL?.includes("neon.tech")) {
   try {
     sql = neon(process.env.DATABASE_URL!)
   } catch (error) {
     console.error("Failed to initialize Neon connection:", error)
     sql = () => Promise.resolve([])
   }
-} else {
-  // Standard PostgreSQL via pg
+} else if (process.env.DATABASE_URL) {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
   sql = async (strings: TemplateStringsArray, ...values: any[]) => {
     let text = ""
@@ -28,14 +20,9 @@ if (isPreviewMode) {
     const result = await pool.query(text, values)
     return result.rows
   }
-}
-
-// Add this helper function to handle preview mode
-function handlePreviewMode<T>(mockData: T): Promise<T> {
-  if (isPreviewMode) {
-    return Promise.resolve(mockData)
-  }
-  throw new Error("This should not be called in preview mode")
+} else {
+  console.error("DATABASE_URL not set")
+  sql = () => Promise.resolve([])
 }
 
 // Organization functions
@@ -45,18 +32,6 @@ export async function createOrganization(orgData: {
   billingEmail: string
   subscriptionTier?: string
 }) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: "preview-org-1",
-      name: orgData.name,
-      domain: orgData.domain,
-      billing_email: orgData.billingEmail,
-      subscription_tier: orgData.subscriptionTier || "TIER_1_5",
-      assessments_used_current_period: 0,
-      status: "ACTIVE",
-      created_at: new Date().toISOString(),
-    })
-  }
 
   try {
     const result = await sql`
@@ -72,16 +47,6 @@ export async function createOrganization(orgData: {
 }
 
 export async function getOrganizationById(orgId: string) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: orgId,
-      name: "Preview Organization",
-      billing_email: "billing@preview.com",
-      subscription_tier: "TIER_1_5",
-      assessments_used_current_period: 2,
-      status: "ACTIVE",
-    })
-  }
 
   try {
     const result = await sql`
@@ -95,16 +60,6 @@ export async function getOrganizationById(orgId: string) {
 }
 
 export async function addUserToOrganization(orgId: string, userId: string, role = "EMPLOYER", invitedBy?: string) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: "preview-org-user-1",
-      organization_id: orgId,
-      user_id: userId,
-      role: role,
-      status: "ACTIVE",
-      created_at: new Date().toISOString(),
-    })
-  }
 
   try {
     const result = await sql`
@@ -120,17 +75,6 @@ export async function addUserToOrganization(orgId: string, userId: string, role 
 }
 
 export async function getUserOrganizations(userId: string) {
-  if (isPreviewMode) {
-    return handlePreviewMode([
-      {
-        id: "preview-org-1",
-        name: "Preview Organization",
-        role: "ACCOUNT_HOLDER",
-        subscription_tier: "TIER_1_5",
-        assessments_used_current_period: 2,
-      },
-    ])
-  }
 
   try {
     const result = await sql`
@@ -156,19 +100,6 @@ export async function createUser(userData: {
   accountType?: string
   temporaryPassword?: boolean
 }) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: "preview-user-1",
-      name: userData.name,
-      email: userData.email,
-      image: userData.image || null,
-      role: "PARTICIPANT",
-      account_type: userData.accountType || "SELF_CREATED",
-      temporary_password: userData.temporaryPassword || false,
-      account_activated: userData.accountType === "EMPLOYER_CREATED" ? false : true,
-      created_at: new Date().toISOString(),
-    })
-  }
 
   try {
     const result = await sql`
@@ -194,9 +125,6 @@ export async function createUser(userData: {
 }
 
 export async function getUserByEmail(email: string) {
-  if (isPreviewMode) {
-    return null
-  }
 
   try {
     const result = await sql`
@@ -212,16 +140,6 @@ export async function getUserByEmail(email: string) {
 }
 
 export async function getUserById(id: string) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: "preview-user-1",
-      name: "Preview User",
-      email: "preview@example.com",
-      image: null,
-      role: "PARTICIPANT",
-      created_at: new Date().toISOString(),
-    })
-  }
 
   try {
     const result = await sql`
@@ -238,17 +156,6 @@ export async function getUserById(id: string) {
 
 // Assessment functions (updated with user-specific data)
 export async function createAssessment(userId: string, name?: string, sponsoredByOrganization?: string) {
-  if (isPreviewMode) {
-    return handlePreviewMode({
-      id: `assessment-${userId}-${Date.now()}`,
-      user_id: userId,
-      name: name || "Untitled Assessment",
-      assessment_type: "SELF",
-      status: "IN_PROGRESS",
-      sponsored_by_organization: sponsoredByOrganization || null,
-      created_at: new Date().toISOString(),
-    })
-  }
 
   try {
   const result = await sql`
@@ -259,7 +166,7 @@ export async function createAssessment(userId: string, name?: string, sponsoredB
   return result[0]
   } catch (error) {
   console.error("Database error in createAssessment:", error)
-  // Fall back to preview data so the assessment can still proceed
+  // Fallback so the assessment can still proceed
   return {
     id: `assessment-${userId}-${Date.now()}`,
     user_id: userId,
@@ -273,105 +180,6 @@ export async function createAssessment(userId: string, name?: string, sponsoredB
   }
 
 export async function getAssessmentsByUserId(userId: string) {
-  if (isPreviewMode) {
-    // User-specific assessment data
-    const userAssessments: Record<string, any[]> = {
-      "alex-johnson-preview": [
-        {
-          id: "alex-assessment-1",
-          user_id: userId,
-          name: "Leadership Development Assessment",
-          assessment_type: "SELF",
-          status: "COMPLETED",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-20T15:30:00Z",
-          organization_name: null,
-        },
-        {
-          id: "alex-assessment-2",
-          user_id: userId,
-          name: "Q1 Performance Review",
-          assessment_type: "SELF",
-          status: "IN_PROGRESS",
-          sponsored_by_organization: "preview-org-1",
-          is_legacy: false,
-          created_at: "2024-01-25T09:00:00Z",
-          updated_at: "2024-01-25T09:00:00Z",
-          organization_name: "Preview Organization",
-        },
-      ],
-      "sarah-wilson-preview": [
-        {
-          id: "sarah-assessment-1",
-          user_id: userId,
-          name: "Personal Development Assessment",
-          assessment_type: "SELF",
-          status: "COMPLETED",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-01-10T14:00:00Z",
-          updated_at: "2024-01-15T16:45:00Z",
-          organization_name: null,
-        },
-        {
-          id: "sarah-assessment-2",
-          user_id: userId,
-          name: "Career Growth Assessment",
-          assessment_type: "SELF",
-          status: "IN_PROGRESS",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-02-01T10:30:00Z",
-          updated_at: "2024-02-01T10:30:00Z",
-          organization_name: null,
-        },
-      ],
-      "employer-preview": [
-        {
-          id: "john-assessment-1",
-          user_id: userId,
-          name: "Executive Leadership Assessment",
-          assessment_type: "SELF",
-          status: "COMPLETED",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-01-05T09:00:00Z",
-          updated_at: "2024-01-12T11:30:00Z",
-          organization_name: null,
-        },
-        {
-          id: "john-assessment-2",
-          user_id: userId,
-          name: "Management Style Assessment",
-          assessment_type: "SELF",
-          status: "IN_PROGRESS",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-02-05T08:15:00Z",
-          updated_at: "2024-02-05T08:15:00Z",
-          organization_name: null,
-        },
-      ],
-      "mike-chen-preview": [
-        {
-          id: "mike-assessment-1",
-          user_id: userId,
-          name: "Admin Skills Assessment",
-          assessment_type: "SELF",
-          status: "COMPLETED",
-          sponsored_by_organization: null,
-          is_legacy: false,
-          created_at: "2024-01-20T13:00:00Z",
-          updated_at: "2024-01-25T15:20:00Z",
-          organization_name: null,
-        },
-      ],
-    }
-
-    return handlePreviewMode(userAssessments[userId] || [])
-  }
 
   try {
     const result = await sql`
@@ -392,81 +200,6 @@ export async function getAssessmentsByUserId(userId: string) {
 
 // Referee invitation functions
 export async function getRefereeInvitationsByUserId(userId: string) {
-  if (isPreviewMode) {
-    // User-specific referee invitation data
-    const userRefereeInvitations: Record<string, any[]> = {
-      "alex-johnson-preview": [
-        {
-          id: "alex-ref-invite-1",
-          assessment_id: "alex-assessment-1",
-          referee_name: "Sarah Wilson",
-          referee_email: "sarah.wilson@example.com",
-          status: "PENDING",
-          invited_at: "2024-01-20T10:00:00Z",
-          expires_at: "2024-02-20T10:00:00Z",
-          assessment_name: "Leadership Development Assessment",
-        },
-        {
-          id: "alex-ref-invite-2",
-          assessment_id: "alex-assessment-2",
-          referee_name: "Mike Chen",
-          referee_email: "mike.chen@example.com",
-          status: "COMPLETED",
-          invited_at: "2024-01-15T14:30:00Z",
-          completed_at: "2024-01-18T16:45:00Z",
-          assessment_name: "Q1 Performance Review",
-        },
-      ],
-      "sarah-wilson-preview": [
-        {
-          id: "sarah-ref-invite-1",
-          assessment_id: "sarah-assessment-1",
-          referee_name: "Alex Johnson",
-          referee_email: "alex.johnson@example.com",
-          status: "COMPLETED",
-          invited_at: "2024-01-12T09:00:00Z",
-          completed_at: "2024-01-14T11:30:00Z",
-          assessment_name: "Personal Development Assessment",
-        },
-      ],
-      "employer-preview": [
-        {
-          id: "john-ref-invite-1",
-          assessment_id: "john-assessment-1",
-          referee_name: "Executive Coach",
-          referee_email: "coach@example.com",
-          status: "COMPLETED",
-          invited_at: "2024-01-08T10:00:00Z",
-          completed_at: "2024-01-10T14:30:00Z",
-          assessment_name: "Executive Leadership Assessment",
-        },
-        {
-          id: "john-ref-invite-2",
-          assessment_id: "john-assessment-2",
-          referee_name: "HR Director",
-          referee_email: "hr@example.com",
-          status: "PENDING",
-          invited_at: "2024-02-06T09:00:00Z",
-          expires_at: "2024-03-06T09:00:00Z",
-          assessment_name: "Management Style Assessment",
-        },
-      ],
-      "mike-chen-preview": [
-        {
-          id: "mike-ref-invite-1",
-          assessment_id: "mike-assessment-1",
-          referee_name: "Team Lead",
-          referee_email: "lead@example.com",
-          status: "COMPLETED",
-          invited_at: "2024-01-22T11:00:00Z",
-          completed_at: "2024-01-24T13:15:00Z",
-          assessment_name: "Admin Skills Assessment",
-        },
-      ],
-    }
-
-    return handlePreviewMode(userRefereeInvitations[userId] || [])
-  }
 
   try {
     const result = await sql`
@@ -486,42 +219,6 @@ export async function getRefereeInvitationsByUserId(userId: string) {
 }
 
 export async function getAssessmentAccessRequestsByUserId(userId: string) {
-  if (isPreviewMode) {
-    // User-specific access request data
-    const userAccessRequests: Record<string, any[]> = {
-      "alex-johnson-preview": [
-        {
-          id: "alex-access-req-1",
-          assessment_id: "alex-assessment-1",
-          assessment_name: "Leadership Development Assessment",
-          requesting_organization_name: "Preview Organization",
-          requested_by_name: "John Smith",
-          status: "PENDING",
-          request_message:
-            "We would like to review your Leadership Development Assessment as part of our hiring evaluation process.",
-          requested_at: "2024-01-20T10:00:00Z",
-          expires_at: "2024-02-20T10:00:00Z",
-        },
-      ],
-      "sarah-wilson-preview": [
-        {
-          id: "sarah-access-req-1",
-          assessment_id: "sarah-assessment-1",
-          assessment_name: "Personal Development Assessment",
-          requesting_organization_name: "Tech Innovations Inc",
-          requested_by_name: "HR Manager",
-          status: "PENDING",
-          request_message: "We are interested in reviewing your assessment for a senior role opportunity.",
-          requested_at: "2024-01-25T14:00:00Z",
-          expires_at: "2024-02-25T14:00:00Z",
-        },
-      ],
-      "employer-preview": [],
-      "mike-chen-preview": [],
-    }
-
-    return handlePreviewMode(userAccessRequests[userId] || [])
-  }
 
   try {
     const result = await sql`
@@ -547,9 +244,6 @@ export async function getAssessmentAccessRequestsByUserId(userId: string) {
 
 // Keep all other existing functions unchanged...
 export async function getDomains() {
-  if (isPreviewMode) {
-    return handlePreviewMode([])
-  }
 
   try {
     const result = await sql`
@@ -565,561 +259,6 @@ export async function getDomains() {
 }
 
 export async function getAllQuestionsWithDomains() {
-  if (isPreviewMode) {
-    return handlePreviewMode([
-      // Domain 1: Openness to Feedback
-      {
-        id: "q1",
-        text: "I ask for feedback to help me improve.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d1",
-        domain_name: "Openness to Feedback",
-        domain_description: "Your ability to receive and act on feedback from others.",
-        domain_order: 1,
-      },
-      {
-        id: "q2",
-        text: "I stay calm and listen carefully when receiving feedback.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d1",
-        domain_name: "Openness to Feedback",
-        domain_description: "Your ability to receive and act on feedback from others.",
-        domain_order: 1,
-      },
-      {
-        id: "q3",
-        text: "I take action based on feedback I receive.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d1",
-        domain_name: "Openness to Feedback",
-        domain_description: "Your ability to receive and act on feedback from others.",
-        domain_order: 1,
-      },
-      {
-        id: "q4",
-        text: "I welcome constructive criticism without becoming defensive.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d1",
-        domain_name: "Openness to Feedback",
-        domain_description: "Your ability to receive and act on feedback from others.",
-        domain_order: 1,
-      },
-
-      // Domain 2: Self-Awareness
-      {
-        id: "q5",
-        text: "I have a realistic understanding of my strengths.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d2",
-        domain_name: "Self-Awareness",
-        domain_description: "Your understanding of your own strengths and areas for development.",
-        domain_order: 2,
-      },
-      {
-        id: "q6",
-        text: "I acknowledge my areas for development.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d2",
-        domain_name: "Self-Awareness",
-        domain_description: "Your understanding of your own strengths and areas for development.",
-        domain_order: 2,
-      },
-      {
-        id: "q7",
-        text: "I reflect on my behavior and its impact on others.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d2",
-        domain_name: "Self-Awareness",
-        domain_description: "Your understanding of your own strengths and areas for development.",
-        domain_order: 2,
-      },
-      {
-        id: "q8",
-        text: "I demonstrate insight into how others perceive me.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d2",
-        domain_name: "Self-Awareness",
-        domain_description: "Your understanding of your own strengths and areas for development.",
-        domain_order: 2,
-      },
-
-      // Domain 3: Learning Orientation
-      {
-        id: "q9",
-        text: "I actively seek out learning opportunities.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d3",
-        domain_name: "Learning Orientation",
-        domain_description: "Your enthusiasm for acquiring new skills and knowledge.",
-        domain_order: 3,
-      },
-      {
-        id: "q10",
-        text: "I show curiosity about new approaches and methods.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d3",
-        domain_name: "Learning Orientation",
-        domain_description: "Your enthusiasm for acquiring new skills and knowledge.",
-        domain_order: 3,
-      },
-      {
-        id: "q11",
-        text: "I apply new knowledge and skills in my work.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d3",
-        domain_name: "Learning Orientation",
-        domain_description: "Your enthusiasm for acquiring new skills and knowledge.",
-        domain_order: 3,
-      },
-      {
-        id: "q12",
-        text: "I enjoy tackling challenging learning experiences.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d3",
-        domain_name: "Learning Orientation",
-        domain_description: "Your enthusiasm for acquiring new skills and knowledge.",
-        domain_order: 3,
-      },
-
-      // Domain 4: Change Readiness
-      {
-        id: "q13",
-        text: "I adapt well to changing circumstances.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d4",
-        domain_name: "Change Readiness",
-        domain_description: "Your ability to adapt to new situations and approaches.",
-        domain_order: 4,
-      },
-      {
-        id: "q14",
-        text: "I embrace new ways of doing things.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d4",
-        domain_name: "Change Readiness",
-        domain_description: "Your ability to adapt to new situations and approaches.",
-        domain_order: 4,
-      },
-      {
-        id: "q15",
-        text: "I remain positive during periods of change.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d4",
-        domain_name: "Change Readiness",
-        description: "Your ability to adapt to new situations and approaches.",
-        domain_order: 4,
-      },
-      {
-        id: "q16",
-        text: "I help others navigate through changes.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d4",
-        domain_name: "Change Readiness",
-        domain_description: "Your ability to adapt to new situations and approaches.",
-        domain_order: 4,
-      },
-
-      // Domain 5: Emotional Regulation
-      {
-        id: "q17",
-        text: "I stay calm under pressure.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d5",
-        domain_name: "Emotional Regulation",
-        domain_description: "Your ability to manage emotions effectively in challenging situations.",
-        domain_order: 5,
-      },
-      {
-        id: "q18",
-        text: "I manage my emotions effectively in difficult situations.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d5",
-        domain_name: "Emotional Regulation",
-        domain_description: "Your ability to manage emotions effectively in challenging situations.",
-        domain_order: 5,
-      },
-      {
-        id: "q19",
-        text: "I recover quickly from setbacks.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d5",
-        domain_name: "Emotional Regulation",
-        domain_description: "Your ability to manage emotions effectively in challenging situations.",
-        domain_order: 5,
-      },
-      {
-        id: "q20",
-        text: "I maintain composure during conflicts.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d5",
-        domain_name: "Emotional Regulation",
-        domain_description: "Your ability to manage emotions effectively in challenging situations.",
-        domain_order: 5,
-      },
-
-      // Domain 6: Goal Orientation
-      {
-        id: "q21",
-        text: "I set clear and achievable goals.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d6",
-        domain_name: "Goal Orientation",
-        domain_description: "Your focus on setting and achieving meaningful objectives.",
-        domain_order: 6,
-      },
-      {
-        id: "q22",
-        text: "I stay focused on my objectives.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d6",
-        domain_name: "Goal Orientation",
-        domain_description: "Your focus on setting and achieving meaningful objectives.",
-        domain_order: 6,
-      },
-      {
-        id: "q23",
-        text: "I persist in working toward my goals.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d6",
-        domain_name: "Goal Orientation",
-        domain_description: "Your focus on setting and achieving meaningful objectives.",
-        domain_order: 6,
-      },
-      {
-        id: "q24",
-        text: "I regularly review and adjust my goals as needed.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d6",
-        domain_name: "Goal Orientation",
-        domain_description: "Your focus on setting and achieving meaningful objectives.",
-        domain_order: 6,
-      },
-
-      // Domain 7: Resilience
-      {
-        id: "q25",
-        text: "I bounce back quickly from disappointments.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d7",
-        domain_name: "Resilience",
-        domain_description: "Your ability to bounce back from setbacks and maintain performance.",
-        domain_order: 7,
-      },
-      {
-        id: "q26",
-        text: "I maintain performance during challenging times.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d7",
-        domain_name: "Resilience",
-        domain_description: "Your ability to bounce back from setbacks and maintain performance.",
-        domain_order: 7,
-      },
-      {
-        id: "q27",
-        text: "I learn from failures and setbacks.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d7",
-        domain_name: "Resilience",
-        domain_description: "Your ability to bounce back from setbacks and maintain performance.",
-        domain_order: 7,
-      },
-      {
-        id: "q28",
-        text: "I stay optimistic even when facing difficulties.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d7",
-        domain_name: "Resilience",
-        domain_description: "Your ability to bounce back from setbacks and maintain performance.",
-        domain_order: 7,
-      },
-
-      // Domain 8: Communication Skills
-      {
-        id: "q29",
-        text: "I communicate my ideas clearly.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d8",
-        domain_name: "Communication Skills",
-        domain_description: "Your effectiveness in expressing ideas and listening to others.",
-        domain_order: 8,
-      },
-      {
-        id: "q30",
-        text: "I listen actively to others.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d8",
-        domain_name: "Communication Skills",
-        domain_description: "Your effectiveness in expressing ideas and listening to others.",
-        domain_order: 8,
-      },
-      {
-        id: "q31",
-        text: "I adapt my communication style to different audiences.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d8",
-        domain_name: "Communication Skills",
-        domain_description: "Your effectiveness in expressing ideas and listening to others.",
-        domain_order: 8,
-      },
-      {
-        id: "q32",
-        text: "I ask thoughtful questions to understand others better.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d8",
-        domain_name: "Communication Skills",
-        domain_description: "Your effectiveness in expressing ideas and listening to others.",
-        domain_order: 8,
-      },
-
-      // Domain 9: Relationship Building
-      {
-        id: "q33",
-        text: "I build rapport easily with others.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d9",
-        domain_name: "Relationship Building",
-        domain_description: "Your ability to develop and maintain positive working relationships.",
-        domain_order: 9,
-      },
-      {
-        id: "q34",
-        text: "I maintain positive relationships even during conflicts.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d9",
-        domain_name: "Relationship Building",
-        domain_description: "Your ability to develop and maintain positive working relationships.",
-        domain_order: 9,
-      },
-      {
-        id: "q35",
-        text: "I show genuine interest in others.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d9",
-        domain_name: "Relationship Building",
-        domain_description: "Your ability to develop and maintain positive working relationships.",
-        domain_order: 9,
-      },
-      {
-        id: "q36",
-        text: "I create an inclusive environment for team members.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d9",
-        domain_name: "Relationship Building",
-        domain_description: "Your ability to develop and maintain positive working relationships.",
-        domain_order: 9,
-      },
-
-      // Domain 10: Accountability
-      {
-        id: "q37",
-        text: "I take responsibility for my actions.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d10",
-        domain_name: "Accountability",
-        domain_description: "Your willingness to take ownership of your actions and commitments.",
-        domain_order: 10,
-      },
-      {
-        id: "q38",
-        text: "I follow through on my commitments.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d10",
-        domain_name: "Accountability",
-        domain_description: "Your willingness to take ownership of your actions and commitments.",
-        domain_order: 10,
-      },
-      {
-        id: "q39",
-        text: "I admit when I make mistakes.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d10",
-        domain_name: "Accountability",
-        domain_description: "Your willingness to take ownership of your actions and commitments.",
-        domain_order: 10,
-      },
-      {
-        id: "q40",
-        text: "I hold myself to high standards.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d10",
-        domain_name: "Accountability",
-        domain_description: "Your willingness to take ownership of your actions and commitments.",
-        domain_order: 10,
-      },
-
-      // Domain 11: Growth Mindset
-      {
-        id: "q41",
-        text: "I believe I can improve my abilities through effort.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d11",
-        domain_name: "Growth Mindset",
-        domain_description: "Your belief that abilities can be developed through dedication and hard work.",
-        domain_order: 11,
-      },
-      {
-        id: "q42",
-        text: "I view challenges as opportunities to grow.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d11",
-        domain_name: "Growth Mindset",
-        domain_description: "Your belief that abilities can be developed through dedication and hard work.",
-        domain_order: 11,
-      },
-      {
-        id: "q43",
-        text: "I see effort as a path to mastery.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d11",
-        domain_name: "Growth Mindset",
-        domain_description: "Your belief that abilities can be developed through dedication and hard work.",
-        domain_order: 11,
-      },
-      {
-        id: "q44",
-        text: "I embrace the learning process, even when it's difficult.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d11",
-        domain_name: "Growth Mindset",
-        domain_description: "Your belief that abilities can be developed through dedication and hard work.",
-        domain_order: 11,
-      },
-
-      // Domain 12: Action Orientation
-      {
-        id: "q45",
-        text: "I take initiative to get things done.",
-        question_order: 1,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d12",
-        domain_name: "Action Orientation",
-        domain_description: "Your tendency to take initiative and follow through on commitments.",
-        domain_order: 12,
-      },
-      {
-        id: "q46",
-        text: "I act decisively when needed.",
-        question_order: 2,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d12",
-        domain_name: "Action Orientation",
-        domain_description: "Your tendency to take initiative and follow through on commitments.",
-        domain_order: 12,
-      },
-      {
-        id: "q47",
-        text: "I follow through on my plans.",
-        question_order: 3,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d12",
-        domain_name: "Action Orientation",
-        domain_description: "Your tendency to take initiative and follow through on commitments.",
-        domain_order: 12,
-      },
-      {
-        id: "q48",
-        text: "I proactively address problems before they escalate.",
-        question_order: 4,
-        question_type: "LIKERT",
-        for_type: "BOTH",
-        domain_id: "d12",
-        domain_name: "Action Orientation",
-        domain_description: "Your tendency to take initiative and follow through on commitments.",
-        domain_order: 12,
-      },
-    ])
-  }
 
   // Rest of the function remains the same for real database mode
   try {
@@ -1138,21 +277,21 @@ export async function getAllQuestionsWithDomains() {
       JOIN domains d ON q.domain_id = d.id
       ORDER BY d.order_index ASC, q.order_index ASC
     `
-    // If database tables are empty, fall back to preview data
+    // If database tables are empty, fall back to seed data
     if (!result || result.length === 0) {
       console.log("No questions found in database, using built-in assessment data")
-      return getAllQuestionsWithDomains_preview()
+      return getAllQuestionsWithDomains_fallback()
     }
     return result
   } catch (error) {
     console.error("Database error in getAllQuestionsWithDomains:", error)
-    // Fall back to preview data on database error
-    return getAllQuestionsWithDomains_preview()
+    // Fall back to seed data on database error
+    return getAllQuestionsWithDomains_fallback()
   }
 }
 
-// Extracted preview data as a named fallback
-function getAllQuestionsWithDomains_preview() {
+// Fallback seed data for domains/questions
+function getAllQuestionsWithDomains_fallback() {
   return [
     { id: "q1", text: "I ask for feedback to help me improve.", question_order: 1, question_type: "LIKERT", for_type: "BOTH", domain_id: "d1", domain_name: "Openness to Feedback", domain_description: "Your ability to receive and act on feedback from others.", domain_order: 1 },
     { id: "q2", text: "I stay calm and listen carefully when receiving feedback.", question_order: 2, question_type: "LIKERT", for_type: "BOTH", domain_id: "d1", domain_name: "Openness to Feedback", domain_description: "Your ability to receive and act on feedback from others.", domain_order: 1 },
@@ -1208,16 +347,6 @@ function getAllQuestionsWithDomains_preview() {
 // Assessment CRUD helpers
 
 export async function getAssessmentById(assessmentId: string) {
-  // Check for mock/preview assessment IDs first
-  if (assessmentId.startsWith("alex-assessment") || assessmentId.startsWith("preview-")) {
-    return {
-      id: assessmentId,
-      name: "Coachability Assessment",
-      status: "IN_PROGRESS",
-      user_id: "alex-johnson-preview",
-      created_at: new Date().toISOString(),
-    }
-  }
 
   try {
     const result = await sql`
@@ -1241,17 +370,6 @@ export async function saveResponse({
   value: string
   responseType: string
 }) {
-  // For mock/preview assessments, return a mock saved response
-  if (assessmentId.startsWith("alex-assessment") || assessmentId.startsWith("preview-")) {
-    return {
-      id: `resp-${questionId}-${Date.now()}`,
-      assessment_id: assessmentId,
-      question_id: questionId,
-      value,
-      response_type: responseType,
-      created_at: new Date().toISOString(),
-    }
-  }
 
   try {
     const id = `resp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -1264,7 +382,7 @@ export async function saveResponse({
     return result?.[0] || { id, assessment_id: assessmentId, question_id: questionId, value, response_type: responseType }
   } catch (error) {
     console.error("Database error in saveResponse:", error)
-    // Return a mock response so the flow doesn't break
+    // Return a fallback response so the flow doesn't break
     return {
       id: `resp-${questionId}-${Date.now()}`,
       assessment_id: assessmentId,
@@ -1276,10 +394,6 @@ export async function saveResponse({
 }
 
 export async function updateAssessmentStatus(assessmentId: string, status: string) {
-  // For mock/preview assessments, just return success
-  if (assessmentId.startsWith("alex-assessment") || assessmentId.startsWith("preview-")) {
-    return { id: assessmentId, status }
-  }
 
   try {
     const result = await sql`

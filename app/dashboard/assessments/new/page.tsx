@@ -102,11 +102,11 @@ export default function NewAssessmentPage() {
             setAssessmentName(assessment.name || "Coachability Assessment")
           } else {
             // Assessment creation failed but we still have domains - use a temporary ID
-            currentAssessmentId = `preview-assessment-${Date.now()}`
+            currentAssessmentId = `temp-assessment-${Date.now()}`
             setAssessmentName("Coachability Assessment")
           }
         } else {
-          currentAssessmentId = `preview-assessment-${Date.now()}`
+          currentAssessmentId = `temp-assessment-${Date.now()}`
           setAssessmentName("Coachability Assessment")
         }
 

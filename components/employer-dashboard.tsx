@@ -1002,15 +1002,15 @@ export function EmployerDashboard() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Organization Name</Label>
-                    <Input defaultValue="Preview Organization" />
+                    <Input defaultValue="" />
                   </div>
                   <div className="space-y-2">
                     <Label>Billing Email</Label>
-                    <Input type="email" defaultValue="billing@preview.com" />
+                    <Input type="email" defaultValue="" />
                   </div>
                   <div className="space-y-2">
                     <Label>Organization Domain</Label>
-                    <Input defaultValue="preview.com" />
+                    <Input defaultValue="" />
                   </div>
                   <div className="space-y-2">
                     <Label>Current Plan</Label>

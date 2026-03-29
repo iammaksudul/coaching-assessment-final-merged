@@ -1,27 +1,41 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { sql } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
     const { token, consents } = await request.json()
+    if (!token) return NextResponse.json({ error: "Token required" }, { status: 400 })
 
-    // Mock implementation for preview mode
-    // In production, this would:
-    // 1. Validate the invitation token
-    // 2. Check if invitation is still valid (not expired, not already accepted)
-    // 3. Create or link assessment to the candidate's account
-    // 4. Increment organization's assessments_used_current_period
-    // 5. Store consent data
-    // 6. Update invitation status to ACCEPTED
-    // 7. Send confirmation emails
+    // Find the sponsored assessment by token/id
+    const rows = await sql`
+      SELECT sa.*, o.name as organization_name
+      FROM sponsored_assessments sa
+      LEFT JOIN organizations o ON sa.organization_id = o.id
+      WHERE sa.id = ${token} OR sa.assessment_id = ${token}
+      LIMIT 1
+    `
+    const invitation = rows?.[0]
+    if (!invitation) return NextResponse.json({ error: "Invalid or expired invitation" }, { status: 404 })
+    if (invitation.status !== "PENDING") return NextResponse.json({ error: "Invitation already responded to" }, { status: 400 })
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    // Update status to ACCEPTED
+    await sql`UPDATE sponsored_assessments SET status = 'ACCEPTED', consent_given_at = NOW(), updated_at = NOW() WHERE id = ${invitation.id}`
+
+    // Store consent if provided
+    if (consents && invitation.candidate_email) {
+      const users = await sql`SELECT id FROM users WHERE email = ${invitation.candidate_email} LIMIT 1`
+      if (users?.[0]) {
+        try {
+          await sql`INSERT INTO consent_records (user_id, assessment_id, consent_type, consented, consent_text) VALUES (${users[0].id}, ${invitation.assessment_id}, 'CANDIDATE_ASSESSMENT', true, ${JSON.stringify(consents)})`
+        } catch {}
+      }
+    }
 
     return NextResponse.json({
       success: true,
       message: "Invitation accepted successfully",
-      assessment_id: "mock-assessment-id",
-      redirect_url: "/assessment-preview",
+      assessment_id: invitation.assessment_id,
+      redirect_url: `/dashboard/assessments/new?assessmentId=${invitation.assessment_id}`,
     })
   } catch (error) {
     console.error("Error accepting invitation:", error)

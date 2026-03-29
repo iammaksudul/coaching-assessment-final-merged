@@ -36,8 +36,7 @@ const SUBSCRIPTION_TIERS = {
 
 export async function GET() {
   try {
-    // In production, these would be actual Stripe price IDs
-    // For preview, we'll return mock data
+    // Return configured pricing tiers
     const prices = Object.entries(SUBSCRIPTION_TIERS).map(([tier, config]) => ({
       tier,
       name: config.name,

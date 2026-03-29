@@ -1,155 +1,64 @@
 "use server"
 
 import { NextResponse } from "next/server"
+import { hash } from "bcryptjs"
+import { sql } from "@/lib/db"
 import Stripe from "stripe"
 
-/**
- * Helpers you may already have elsewhere.  Replace these with real
- * implementations if the project contains them.
- */
-async function createOrganization(data: {
-  name: string
-  domain?: string
-  billingEmail: string
-  subscriptionTier: string
-}) {
-  //
-  // 👉 TODO: Persist org to DB here.
-  //
-  return {
-    id: "org_mock_123",
-    ...data,
-    createdAt: new Date().toISOString(),
-  }
-}
-
-async function createOrgOwnerUser(data: {
-  name: string
-  email: string
-  password: string
-  organizationId: string
-  jobTitle?: string
-}) {
-  //
-  // 👉 TODO: Persist user to DB here (hash password, etc.).
-  //
-  return {
-    id: "user_mock_123",
-    ...data,
-    createdAt: new Date().toISOString(),
-  }
-}
-
-// POST /api/employer/register -------------------------------------------------
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Basic validation
-    const requiredFields = [
-      "organizationName",
-      "billingEmail",
-      "subscriptionTier",
-      "name",
-      "email",
-      "password",
-    ] as const
-
+    const requiredFields = ["organizationName", "billingEmail", "subscriptionTier", "name", "email", "password"] as const
     for (const field of requiredFields) {
       if (!body[field] || String(body[field]).trim() === "") {
         return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 })
       }
     }
 
-    /**
-     * 1️⃣  Create / save the organization
-     */
-    const organization = await createOrganization({
-      name: body.organizationName,
-      domain: body.organizationDomain || undefined,
-      billingEmail: body.billingEmail,
-      subscriptionTier: body.subscriptionTier,
-    })
+    // Check if user already exists
+    const existing = await sql`SELECT id FROM users WHERE email = ${body.email}`
+    if (existing?.length > 0) return NextResponse.json({ error: "User with this email already exists" }, { status: 409 })
 
-    /**
-     * 2️⃣  Create the primary account-holder user
-     */
-    const user = await createOrgOwnerUser({
-      name: body.name,
-      email: body.email,
-      password: body.password,
-      organizationId: organization.id,
-      jobTitle: body.jobTitle,
-    })
+    // Create organization
+    const orgRows = await sql`
+      INSERT INTO organizations (name, domain, billing_email, subscription_tier)
+      VALUES (${body.organizationName}, ${body.organizationDomain || null}, ${body.billingEmail}, ${body.subscriptionTier})
+      RETURNING *
+    `
+    const organization = orgRows?.[0]
+    if (!organization) return NextResponse.json({ error: "Failed to create organization" }, { status: 500 })
 
-    /**
-     * 3️⃣  Handle Stripe subscription (skip in Preview mode)
-     */
-    if (process.env.STRIPE_SECRET_KEY) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2023-10-16",
-      })
+    // Create user
+    const hashedPassword = await hash(body.password, 10)
+    const userRows = await sql`
+      INSERT INTO users (name, email, password, role, account_type, organization_id)
+      VALUES (${body.name}, ${body.email}, ${hashedPassword}, 'EMPLOYER', 'EMPLOYER', ${organization.id})
+      RETURNING id, name, email, role
+    `
+    const user = userRows?.[0]
+    if (!user) return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
 
-      // 🔄 DYNAMIC PRICE LOOKUP -----------------------------------------------
-      // We assume each Price in Stripe has a unique `lookup_key`
-      // that exactly matches the `subscriptionTier` coming from the form
-      // (e.g. TIER_1_5, TIER_6_12, …).
-      const prices = await stripe.prices.list({
-        lookup_keys: [body.subscriptionTier],
-        active: true,
-        limit: 1,
-        expand: ["data.product"],
-      })
+    // Link user to org
+    await sql`INSERT INTO organization_users (organization_id, user_id, role, status) VALUES (${organization.id}, ${user.id}, 'OWNER', 'ACTIVE')`
 
-      if (prices.data.length === 0) {
-        return NextResponse.json(
-          { error: `Subscription tier ${body.subscriptionTier} is not configured. Please contact support.` },
-          { status: 400 },
-        )
-      }
-
-      const priceId = prices.data[0].id
-
-      // 💳 Create Customer → Subscription
-      const customer = await stripe.customers.create({
-        email: body.billingEmail,
-        name: organization.name,
-        metadata: { organizationId: organization.id },
-      })
-
+    // Handle Stripe subscription if configured
+    if (process.env.STRIPE_SECRET_KEY && body.subscriptionTier !== "FREE") {
       try {
-        await stripe.subscriptions.create({
-          customer: customer.id,
-          items: [{ price: priceId }],
-          payment_behavior: "default_incomplete",
-          metadata: { organizationId: organization.id },
-        })
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" })
+        const prices = await stripe.prices.list({ lookup_keys: [body.subscriptionTier], active: true, limit: 1 })
+        if (prices.data.length > 0) {
+          const customer = await stripe.customers.create({ email: body.billingEmail, name: body.organizationName, metadata: { organizationId: organization.id } })
+          await stripe.subscriptions.create({ customer: customer.id, items: [{ price: prices.data[0].id }], payment_behavior: "default_incomplete", metadata: { organizationId: organization.id } })
+        }
       } catch (stripeErr: any) {
         console.error("Stripe subscription error:", stripeErr)
-        return NextResponse.json({ error: `Stripe error: ${stripeErr?.message ?? "unknown error"}` }, { status: 400 })
       }
     }
 
-    /**
-     * 4️⃣  Respond with success (mock or real — always JSON)
-     */
-    return NextResponse.json(
-      {
-        organization,
-        user,
-        message: process.env.STRIPE_SECRET_KEY
-          ? "Organization created – subscription pending payment."
-          : "Organization created successfully (preview mode – no Stripe).",
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({ organization, user, message: "Organization created successfully." }, { status: 201 })
   } catch (err) {
     console.error("Employer registration error:", err)
-    return NextResponse.json(
-      {
-        error: "Registration failed. Please check the server logs or contact support.",
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Registration failed." }, { status: 500 })
   }
 }
