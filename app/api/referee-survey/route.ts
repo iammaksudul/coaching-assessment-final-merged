@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         await sql`
           INSERT INTO responses (assessment_id, question_id, answer, respondent_type, respondent_token)
           VALUES (${invitation.assessment_id}, ${questionId}, ${answer}, 'REFEREE', ${token})
-          ON CONFLICT (assessment_id, question_id, respondent_token) 
+          ON CONFLICT (assessment_id, question_id, COALESCE(respondent_token, '')) 
           DO UPDATE SET answer = ${answer}, updated_at = NOW()
         `
       } catch {

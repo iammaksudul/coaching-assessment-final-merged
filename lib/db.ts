@@ -376,7 +376,7 @@ export async function saveResponse({
     const result = await sql`
       INSERT INTO responses (id, assessment_id, question_id, value, response_type, created_at, updated_at)
       VALUES (${id}, ${assessmentId}, ${questionId}, ${value}, ${responseType}, NOW(), NOW())
-      ON CONFLICT (assessment_id, question_id) DO UPDATE SET value = ${value}, updated_at = NOW()
+      ON CONFLICT (assessment_id, question_id, COALESCE(respondent_token, '')) DO UPDATE SET value = ${value}, updated_at = NOW()
       RETURNING *
     `
     return result?.[0] || { id, assessment_id: assessmentId, question_id: questionId, value, response_type: responseType }
