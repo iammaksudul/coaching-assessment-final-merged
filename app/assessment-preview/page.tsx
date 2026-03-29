@@ -173,9 +173,9 @@ export default function AssessmentPreviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Preview Mode Banner */}
+      {/*  Banner */}
       <div className="bg-blue-600 text-white text-center py-2 text-sm">
-        <strong>Preview Mode:</strong> This is a demonstration of the assessment experience
+        
       </div>
 
       <div className="container py-8">

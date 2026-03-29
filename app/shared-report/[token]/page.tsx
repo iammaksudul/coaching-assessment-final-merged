@@ -68,64 +68,53 @@ export default function SharedReportPage() {
   useEffect(() => {
     const loadReportData = async () => {
       try {
-        // Simulate API call to fetch shared report data
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        // Mock data based on token
-        const mockData: SharedReportData = {
-          id: "shared-report-1",
-          participantName: "Alex Johnson",
-          participantEmail: "alex.johnson@example.com",
-          assessmentName: "Leadership Development Assessment",
-          accessLevel: token.includes("summary") ? "SUMMARY_ONLY" : token.includes("scores") ? "SCORES_ONLY" : "FULL",
-          sharedBy: "Alex Johnson",
-          sharedDate: "2024-01-20T10:00:00Z",
-          expiresAt: "2024-04-20T10:00:00Z",
-          organizationName: "Preview Organization",
-          contactPerson: "John Smith",
-          personalMessage:
-            "I'm excited about the opportunity to work with your team and believe this assessment will help demonstrate my commitment to professional growth and development.",
-          status: "ACTIVE",
-          viewCount: 3,
-          lastViewedAt: "2024-01-22T14:30:00Z",
-          overallScores: {
-            self: 3.8,
-            referee: 3.7,
-            combined: 3.8,
-          },
-          domainScores: {
-            "openness-to-feedback": { self: 4.2, referee: 3.8 },
-            "self-awareness": { self: 3.5, referee: 3.7 },
-            "learning-orientation": { self: 4.5, referee: 4.3 },
-            "change-readiness": { self: 3.8, referee: 3.5 },
-            "emotional-regulation": { self: 3.2, referee: 3.0 },
-            "goal-orientation": { self: 4.1, referee: 4.0 },
-            resilience: { self: 3.7, referee: 3.9 },
-            "communication-skills": { self: 3.9, referee: 3.6 },
-            "relationship-building": { self: 4.0, referee: 4.2 },
-            accountability: { self: 4.3, referee: 4.1 },
-            "growth-mindset": { self: 4.4, referee: 4.2 },
-            "action-orientation": { self: 3.6, referee: 3.4 },
-          },
-          recommendations: [
-            "Focus on improving emotional regulation through mindfulness practices or stress management techniques.",
-            "Work on enhancing action orientation by setting smaller, more achievable milestones.",
-            "Strong learning orientation and growth mindset are significant assets for coaching success.",
-            "Consider seeking more regular feedback to further develop openness to feedback.",
-            "Communication skills could benefit from active listening practice in challenging conversations.",
-            "Continue leveraging accountability and goal orientation strengths in coaching relationships.",
-          ],
-          coachFit: {
-            directSupportive: 0.7,
-            challengingReflective: 0.8,
-            structuredFlexible: 0.6,
-            taskRelationship: 0.5,
-            preferredStyle:
-              "Prefers a coach who provides a balance of challenge and reflection, with moderate structure and equal focus on tasks and relationships.",
-          },
+        // Fetch shared report data by token
+        const res = await fetch(`/api/user/access-requests`)
+        if (res.ok) {
+          const data = await res.json()
+          // Find the sharing permission matching this token
+          const allRequests = [...(data.incoming || []), ...(data.outgoing || [])]
+          const match = allRequests.find((r: any) => r.id === token || r.assessment_id === token)
+          if (match) {
+            // Fetch the actual report
+            const reportRes = await fetch(`/api/assessments/${match.assessment_id || token}/report`)
+            if (reportRes.ok) {
+              const reportData = await reportRes.json()
+              const sharedData: SharedReportData = {
+                id: token,
+                participantName: reportData.participant?.name || "Unknown",
+                participantEmail: reportData.participant?.email || "",
+                assessmentName: reportData.title || "Coachability Assessment",
+                accessLevel: match.permission_level || "FULL",
+                sharedBy: reportData.participant?.name || "",
+                sharedDate: match.created_at || match.requested_at,
+                expiresAt: match.expires_at,
+                organizationName: match.organization_name || "",
+                contactPerson: match.requested_by_name || "",
+                personalMessage: match.request_message || "",
+                status: (match.status || "ACTIVE").toUpperCase(),
+                viewCount: 0,
+                lastViewedAt: null,
+                overallScores: {
+                  self: Object.values(reportData.domainScores || {}).reduce((sum: number, s: any) => sum + (s.self || 0), 0) / Math.max(Object.keys(reportData.domainScores || {}).length, 1),
+                  referee: Object.values(reportData.domainScores || {}).reduce((sum: number, s: any) => sum + (s.referee || 0), 0) / Math.max(Object.keys(reportData.domainScores || {}).length, 1),
+                  combined: 0,
+                },
+                domainScores: reportData.domainScores || {},
+                recommendations: [],
+                coachFit: { directSupportive: 0.5, challengingReflective: 0.5, structuredFlexible: 0.5, taskRelationship: 0.5, preferredStyle: "" },
+              }
+              sharedData.overallScores.combined = (sharedData.overallScores.self + sharedData.overallScores.referee) / 2
+              setReportData(sharedData)
+            } else {
+              setError("Report not found")
+            }
+          } else {
+            setError("Shared report not found")
+          }
+        } else {
+          setError("Failed to load shared report")
         }
-
-        setReportData(mockData)
       } catch (err) {
         setError("Failed to load shared report")
       } finally {

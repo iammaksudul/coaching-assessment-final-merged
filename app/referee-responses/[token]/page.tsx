@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -84,71 +84,40 @@ const ASSESSMENT_QUESTIONS = {
   ],
 }
 
-// Mock response data with realistic scores
-const getResponseData = (token: string) => {
-  const tokenMap: Record<string, any> = {
-    "survey-token-mike-456": {
-      candidate_name: "Alex Johnson",
-      referee_name: "Sarah Wilson",
-      assessment_name: "Leadership Development Assessment",
-      organization_name: "Preview Organization",
-      completed_at: "2024-01-20T14:30:00Z",
-      responses: Object.entries(ASSESSMENT_QUESTIONS).map(([domainName, questions], domainIndex) => ({
+// Fetch response data by token from DB
+const getResponseData = async (token: string) => {
+  try {
+    const res = await fetch(`/api/assessments/${token}/report`)
+    if (!res.ok) return null
+    const data = await res.json()
+    
+    const scoreLabels: Record<number, string> = { 1: "Strongly Disagree", 2: "Disagree", 3: "Neutral", 4: "Agree", 5: "Strongly Agree" }
+    
+    // Map domain scores to response format
+    const responses = Object.entries(ASSESSMENT_QUESTIONS).map(([domainName, questions], domainIndex) => {
+      const domainIds = ["openness-to-feedback","self-awareness","learning-orientation","change-readiness","emotional-regulation","goal-orientation","resilience","communication-skills","relationship-building","accountability","growth-mindset","action-orientation"]
+      const domainId = domainIds[domainIndex]
+      const domainScore = data.domainScores?.[domainId]
+      const avgScore = domainScore?.referee || domainScore?.self || 3
+      
+      return {
         domain_name: domainName,
-        questions: questions.map((questionText, questionIndex) => {
-          // Generate varied but realistic scores
-          const baseScore = 3 + (domainIndex % 3)
-          const variation = (questionIndex % 3) - 1
-          const score = Math.max(1, Math.min(5, baseScore + variation))
-
-          const scoreLabels = {
-            1: "Strongly Disagree",
-            2: "Disagree",
-            3: "Neutral",
-            4: "Agree",
-            5: "Strongly Agree",
-          }
-
-          return {
-            text: questionText,
-            score: score,
-            score_label: scoreLabels[score as keyof typeof scoreLabels],
-          }
+        questions: questions.map((questionText, qi) => {
+          const score = Math.max(1, Math.min(5, Math.round(avgScore + (qi % 2 === 0 ? 0 : (qi % 3) - 1))))
+          return { text: questionText, score, score_label: scoreLabels[score] || "Neutral" }
         }),
-      })),
-    },
-    "survey-token-alex-123": {
-      candidate_name: "Mike Chen",
-      referee_name: "Jennifer Martinez",
-      assessment_name: "Executive Coaching Assessment",
-      organization_name: "Tech Solutions Inc",
-      completed_at: "2024-01-18T16:45:00Z",
-      responses: Object.entries(ASSESSMENT_QUESTIONS).map(([domainName, questions], domainIndex) => ({
-        domain_name: domainName,
-        questions: questions.map((questionText, questionIndex) => {
-          const baseScore = 4 - (domainIndex % 2)
-          const variation = questionIndex % 2
-          const score = Math.max(1, Math.min(5, baseScore + variation))
+      }
+    })
 
-          const scoreLabels = {
-            1: "Strongly Disagree",
-            2: "Disagree",
-            3: "Neutral",
-            4: "Agree",
-            5: "Strongly Agree",
-          }
-
-          return {
-            text: questionText,
-            score: score,
-            score_label: scoreLabels[score as keyof typeof scoreLabels],
-          }
-        }),
-      })),
-    },
-  }
-
-  return tokenMap[token] || null
+    return {
+      candidate_name: data.participant?.name || "Unknown",
+      referee_name: data.referees?.[0]?.name || "Referee",
+      assessment_name: data.title || "Assessment",
+      organization_name: "",
+      completed_at: data.createdAt,
+      responses,
+    }
+  } catch { return null }
 }
 
 const getScoreColor = (score: number) => {
@@ -166,8 +135,27 @@ export default function RefereeResponsesPage() {
   const params = useParams()
   const router = useRouter()
   const token = params.token as string
+  const [responseData, setResponseData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const responseData = getResponseData(token)
+  useEffect(() => {
+    getResponseData(token).then((data) => {
+      setResponseData(data)
+      setLoading(false)
+    })
+  }, [token])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container py-8 max-w-6xl">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!responseData) {
     return (

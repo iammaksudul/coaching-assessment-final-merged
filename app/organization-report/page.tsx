@@ -35,17 +35,11 @@ const COACHABILITY_DOMAINS = [
   { id: "action-orientation", name: "Action Orientation" },
 ]
 
-function generateMockScores() {
+function generateScoresFromData(domainScores: any) {
   return COACHABILITY_DOMAINS.map((domain) => {
-    const selfScore = Math.round((3 + Math.random() * 2) * 10) / 10
-    const refereeScore = Math.round((3 + Math.random() * 2) * 10) / 10
-    const composite = Math.round(((selfScore + refereeScore) / 2) * 10) / 10
-    return {
-      ...domain,
-      selfScore,
-      refereeScore,
-      composite,
-    }
+    const s = domainScores?.[domain.id] || { self: 0, referee: 0 }
+    const composite = Math.round(((s.self + s.referee) / 2) * 10) / 10
+    return { ...domain, selfScore: s.self, refereeScore: s.referee, composite }
   })
 }
 
@@ -59,33 +53,38 @@ function OrganizationReportContent() {
   const [report, setReport] = useState<any>(null)
 
   useEffect(() => {
-    // Simulate loading report data
-    const timer = setTimeout(() => {
-      const scores = generateMockScores()
-      const overallScore = Math.round((scores.reduce((sum, s) => sum + s.composite, 0) / scores.length) * 10) / 10
-
-      // Use candidateId to determine which mock report to show
-      const isRobert = candidateId === "rpt-1"
-      setReport({
-        candidate: {
-          name: isRobert ? "Robert Kim" : "Sarah Wilson",
-          email: isRobert ? "robert.kim@company.com" : "sarah.wilson@preview.com",
-        },
-        assessment: {
-          name: isRobert ? "Manager Development Assessment" : "Coachability Assessment - Q4 2024",
-          completedAt: isRobert ? "2024-01-20T16:00:00Z" : "2023-12-15T12:00:00Z",
-          source: isRobert ? "Commissioned" : "Shared (Access Granted)",
-          refereesCompleted: isRobert ? 4 : 3,
-          refereesInvited: isRobert ? 5 : 3,
-        },
-        overallScore,
-        scores,
-        strengths: scores.sort((a, b) => b.composite - a.composite).slice(0, 3),
-        developmentAreas: scores.sort((a, b) => a.composite - b.composite).slice(0, 3),
-      })
+    const fetchReport = async () => {
+      try {
+        const assessmentId = candidateId || ""
+        const res = await fetch(`/api/assessments/${assessmentId}/report`)
+        if (res.ok) {
+          const data = await res.json()
+          const scores = generateScoresFromData(data.domainScores || {})
+          const overallScore = Math.round((scores.reduce((sum, s) => sum + s.composite, 0) / scores.length) * 10) / 10
+          setReport({
+            candidate: {
+              name: data.participant?.name || "Unknown",
+              email: data.participant?.email || "",
+            },
+            assessment: {
+              name: data.title || "Coachability Assessment",
+              completedAt: data.createdAt,
+              source: "Assessment Report",
+              refereesCompleted: data.referees?.length || 0,
+              refereesInvited: data.referees?.length || 0,
+            },
+            overallScore,
+            scores,
+            strengths: [...scores].sort((a, b) => b.composite - a.composite).slice(0, 3),
+            developmentAreas: [...scores].sort((a, b) => a.composite - b.composite).slice(0, 3),
+          })
+        }
+      } catch (err) {
+        console.error("Error loading report:", err)
+      }
       setLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    }
+    fetchReport()
   }, [candidateId])
 
   const formatDate = (dateString: string) =>

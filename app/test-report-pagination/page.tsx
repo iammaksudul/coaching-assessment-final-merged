@@ -76,7 +76,7 @@ export default function TestReportPagination() {
   const totalPages = Math.ceil(COACHABILITY_DOMAINS.length / domainsPerPage)
 
   // VARIABLE: This would come from API/database in real implementation
-  const mockReportData = {
+  const sampleReportData = {
     participant: {
       name: "Alex Johnson",
       email: "alex@example.com",
@@ -165,7 +165,7 @@ export default function TestReportPagination() {
             <CardContent>
               <div className="space-y-6">
                 {getCurrentPageDomains().map((domain) => {
-                  const scores = mockReportData.domainScores[domain.id as keyof typeof mockReportData.domainScores]
+                  const scores = sampleReportData.domainScores[domain.id as keyof typeof sampleReportData.domainScores]
                   return (
                     <div key={domain.id} className="space-y-2">
                       <div className="flex items-center justify-between">

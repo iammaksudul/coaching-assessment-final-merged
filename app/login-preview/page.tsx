@@ -13,28 +13,28 @@ export default function LoginPreview() {
     {
       id: "alex-johnson-preview",
       name: "Alex Johnson",
-      email: "alex.johnson@preview.com",
+      email: "alex.johnson@example.com",
       role: "PARTICIPANT",
       description: "Candidate with multiple assessments",
     },
     {
       id: "employer-preview",
       name: "John Smith",
-      email: "employer@preview.com",
+      email: "employer@example.com",
       role: "EMPLOYER",
       description: "Employer account with organization access",
     },
     {
       id: "sarah-williams-preview",
       name: "Sarah Williams",
-      email: "sarah.williams@preview.com",
+      email: "sarah.williams@example.com",
       role: "PARTICIPANT",
       description: "Candidate with pending assessments",
     },
     {
       id: "admin-preview",
       name: "Admin User",
-      email: "admin@preview.com",
+      email: "admin@example.com",
       role: "ADMIN",
       description: "Administrator account",
     },
@@ -54,7 +54,7 @@ export default function LoginPreview() {
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[550px]">
         <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Preview Mode Login</h1>
+          <h1 className="text-2xl font-semibold tracking-tight"> Login</h1>
           <p className="text-sm text-muted-foreground">Select a test account to explore the application</p>
         </div>
 

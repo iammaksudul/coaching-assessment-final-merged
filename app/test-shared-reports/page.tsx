@@ -63,7 +63,7 @@ export default function TestSharedReportsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Shared Report Access Levels</h1>
         <p className="text-muted-foreground">
-          Preview the different access levels that organizations see when viewing shared reports
+          View the different access levels that organizations see when viewing shared reports
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export default function TestSharedReportsPage() {
                 <Link href={`/shared-report/${variant.token}`} className="block">
                   <Button className="w-full" variant="outline">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Preview {variant.badge}
+                    View {variant.badge}
                   </Button>
                 </Link>
               </CardContent>

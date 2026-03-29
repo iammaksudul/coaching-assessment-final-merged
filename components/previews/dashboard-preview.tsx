@@ -62,7 +62,7 @@ export function DashboardPreview() {
     <div className="flex flex-col gap-6 py-8">
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Preview User!</p>
+        <p className="text-muted-foreground">Welcome back, User!</p>
       </div>
 
       {/* Getting Started - Now at the top */}

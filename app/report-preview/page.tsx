@@ -79,10 +79,10 @@ const getUserAssessmentData = (userEmail: string) => {
   console.log("Getting assessment data for user:", userEmail)
 
   const userDataMap: Record<string, any> = {
-    "sarah.wilson@preview.com": {
+    "sarah.wilson@example.com": {
       participant: {
         name: "Sarah Wilson",
-        email: "sarah.wilson@preview.com",
+        email: "sarah.wilson@example.com",
         assessmentDate: "January 15, 2024",
       },
       referees: [
@@ -203,10 +203,10 @@ const getUserAssessmentData = (userEmail: string) => {
         },
       ],
     },
-    "alex.johnson@preview.com": {
+    "alex.johnson@example.com": {
       participant: {
         name: "Alex Johnson",
-        email: "alex.johnson@preview.com",
+        email: "alex.johnson@example.com",
         assessmentDate: "May 20, 2023",
       },
       referees: [
@@ -327,11 +327,11 @@ const getUserAssessmentData = (userEmail: string) => {
         },
       ],
     },
-    // ADDED: John Smith (employer@preview.com) assessment data
-    "employer@preview.com": {
+    // ADDED: John Smith (employer@example.com) assessment data
+    "employer@example.com": {
       participant: {
         name: "John Smith",
-        email: "employer@preview.com",
+        email: "employer@example.com",
         assessmentDate: "January 12, 2024",
       },
       referees: [
@@ -453,10 +453,10 @@ const getUserAssessmentData = (userEmail: string) => {
       ],
     },
     // ADDED: Mike Chen (admin) assessment data
-    "mike.chen@preview.com": {
+    "mike.chen@example.com": {
       participant: {
         name: "Mike Chen",
-        email: "mike.chen@preview.com",
+        email: "mike.chen@example.com",
         assessmentDate: "January 25, 2024",
       },
       referees: [
@@ -589,10 +589,10 @@ export default function ReportPreviewPage() {
       console.log(
         "Available user emails in data:",
         Object.keys({
-          "sarah.wilson@preview.com": true,
-          "alex.johnson@preview.com": true,
-          "employer@preview.com": true,
-          "mike.chen@preview.com": true,
+          "sarah.wilson@example.com": true,
+          "alex.johnson@example.com": true,
+          "employer@example.com": true,
+          "mike.chen@example.com": true,
         }),
       )
       setAssessmentData(null)
@@ -663,8 +663,8 @@ export default function ReportPreviewPage() {
                 <strong>Debug Info:</strong> User email: {user.email}
               </p>
               <p className="text-sm text-yellow-800">
-                Available data for: sarah.wilson@preview.com, alex.johnson@preview.com, employer@preview.com,
-                mike.chen@preview.com
+                Available data for: sarah.wilson@example.com, alex.johnson@example.com, employer@example.com,
+                mike.chen@example.com
               </p>
             </div>
             <Link href="/dashboard">
@@ -678,9 +678,9 @@ export default function ReportPreviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Preview Mode Banner */}
+      {/*  Banner */}
       <div className="bg-blue-600 text-white text-center py-2 text-sm">
-        <strong>Preview Mode:</strong> This is a demonstration of the comprehensive coachability report with enhanced
+        
         recommendations
       </div>
 

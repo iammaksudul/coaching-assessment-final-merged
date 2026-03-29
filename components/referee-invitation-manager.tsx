@@ -128,19 +128,27 @@ export function RefereeInvitationManager({
     }
 
     try {
-      // API call
-      const mockNewInvitation: RefereeInvitation = {
-        id: `ref-${Date.now()}`,
+      const res = await fetch("/api/referees/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assessmentId: assessmentId,
+          referees: [{ name: newReferee.name, email: newReferee.email, relationship: newReferee.relationship }],
+        }),
+      })
+      const data = await res.json()
+      const newInvitation: RefereeInvitation = {
+        id: data?.invitations?.[0]?.id || `ref-${Date.now()}`,
         referee_name: newReferee.name,
         referee_email: newReferee.email,
         relationship: newReferee.relationship,
         status: "PENDING",
         invited_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         reminder_count: 0,
       }
 
-      const updatedInvitations = [...invitations, mockNewInvitation]
+      const updatedInvitations = [...invitations, newInvitation]
       onInvitationUpdate(updatedInvitations)
 
       toast({
