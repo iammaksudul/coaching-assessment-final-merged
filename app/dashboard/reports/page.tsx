@@ -84,9 +84,18 @@ export default function ReportsPage() {
                     <Link href={`/dashboard/reports/${report.id}`}>
                       <Button variant="outline">View Report</Button>
                     </Link>
-                    <Button variant="outline" size="icon">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        const w = window.open(`/dashboard/reports/${report.id}`, '_blank')
+                        if (w) {
+                          w.addEventListener('load', () => setTimeout(() => w.print(), 500))
+                        }
+                      }}
+                    >
                       <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
+                      <span className="sr-only">Download PDF</span>
                     </Button>
                   </div>
                 </div>

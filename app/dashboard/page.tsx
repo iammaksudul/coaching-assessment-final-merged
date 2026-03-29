@@ -516,12 +516,14 @@ export default function DashboardPage() {
                                 </Button>
                               </Link>
                             )}
-                            <Link href={`/referee-management/${assessment.id}`}>
-                              <Button variant="outline" size="sm">
-                                <Users className="w-3 h-3 mr-1" />
-                                Referees
-                              </Button>
-                            </Link>
+                            {assessment.status === "COMPLETED" && (
+                              <Link href={`/referee-management/${assessment.id}`}>
+                                <Button variant="outline" size="sm">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Referees
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

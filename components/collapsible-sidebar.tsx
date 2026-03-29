@@ -26,7 +26,6 @@ import { useAuth } from "@/components/auth-provider"
 // Participant navigation items
 const participantNavItems = [
   { title: "Overview", href: "/dashboard", icon: Home },
-  { title: "Assessments", href: "/dashboard/assessments/new", icon: FileText },
   { title: "Referees", href: "/dashboard/referees", icon: Users },
   { title: "Reports", href: "/dashboard?tab=reports", icon: BarChart3 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },

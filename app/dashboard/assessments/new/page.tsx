@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Circle } from "lucide-react"
+import { CheckCircle2, Circle, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 // Define the Likert scale options
 const likertOptions = [
@@ -260,6 +261,14 @@ export default function NewAssessmentPage() {
   return (
     <div className="container py-8">
       <div className="mb-8 flex flex-col gap-4">
+        <div className="flex items-center gap-4 mb-2">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
         <div>
           <h1 className="text-3xl font-bold">Self-Assessment</h1>
           <h2 className="text-xl text-muted-foreground font-medium">{assessmentName}</h2>

@@ -4,14 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Home,
-  ClipboardList,
   Users,
   FileText,
   Settings,
-  Building2,
   CreditCard,
   AlertTriangle,
   Shield,
+  Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
@@ -19,7 +18,6 @@ import { useAuth } from "@/components/auth-provider"
 // Participant/Referee navigation items
 const participantNavItems = [
   { href: "/dashboard", label: "Dashboard Home", icon: Home },
-  { href: "/take-assessment", label: "Take Assessment", icon: ClipboardList },
   { href: "/dashboard/referees", label: "Referees", icon: Users },
   { href: "/dashboard/reports", label: "Reports", icon: FileText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },

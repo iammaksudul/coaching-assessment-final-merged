@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/components/auth-provider"
-import { CreditCard, Calendar, TrendingUp } from "lucide-react"
+import { CreditCard, Calendar, TrendingUp, ArrowLeft, Home } from "lucide-react"
 import { format } from "date-fns"
+import Link from "next/link"
 
 const SUBSCRIPTION_TIERS = [
   { id: "TIER_1_5", name: "Starter", assessments: "1-5", monthly: 39, annual: 433 },
@@ -138,7 +139,28 @@ export default function ManageSubscriptionPage() {
   const currentTier = getCurrentTier()
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-5xl py-8 px-4 sm:px-6 lg:px-8">
+        {/* Navigation Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </Link>
+            <div className="h-4 w-px bg-border" />
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Subscription Management</h1>
         <p className="text-muted-foreground">Manage your subscription and billing preferences</p>
@@ -261,28 +283,14 @@ export default function ManageSubscriptionPage() {
           <CardDescription>Your recent payments and invoices</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[
-              { date: "2024-01-01", amount: 89, status: "Paid", invoice: "inv_001" },
-              { date: "2023-12-01", amount: 89, status: "Paid", invoice: "inv_002" },
-              { date: "2023-11-01", amount: 89, status: "Paid", invoice: "inv_003" },
-            ].map((payment, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b">
-                <div>
-                  <div className="font-medium">{format(new Date(payment.date), "MMM dd, yyyy")}</div>
-                  <div className="text-sm text-muted-foreground">Invoice {payment.invoice}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">${payment.amount}</div>
-                  <Badge variant="outline" className="text-xs">
-                    {payment.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+          <div className="text-center py-8 text-muted-foreground">
+            <CreditCard className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+            <p>Billing history will appear here once you have an active paid subscription.</p>
           </div>
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   )
 }

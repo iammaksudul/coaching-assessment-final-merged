@@ -44,22 +44,7 @@ function LoginForm() {
     }
   }
 
-  // Test accounts for preview
-  const testAccounts = [
-    { name: "Alex Johnson", email: "alex.johnson@preview.com", role: "Candidate" },
-    { name: "John Smith", email: "employer@preview.com", role: "Employer" },
-    { name: "Sarah Wilson", email: "sarah.wilson@preview.com", role: "Referee" },
-    { name: "Mike Chen", email: "mike.chen@preview.com", role: "Admin" },
-  ]
 
-  const handleTestLogin = async (testEmail: string) => {
-    setEmail(testEmail)
-    setPassword("password123")
-    const success = await signIn(testEmail, "password123")
-    if (success) {
-      router.push("/dashboard")
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -127,37 +112,9 @@ function LoginForm() {
           </CardContent>
         </Card>
 
-        {/* Preview Mode Test Accounts */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-800">Preview Mode - Test Accounts</CardTitle>
-            <CardDescription className="text-blue-600">
-              Click any account below to sign in instantly for testing
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {testAccounts.map((account) => (
-              <Button
-                key={account.email}
-                variant="outline"
-                className="w-full justify-start text-left"
-                onClick={() => handleTestLogin(account.email)}
-                disabled={isLoading}
-              >
-                <div className="flex flex-col items-start">
-                  <span className="font-medium">{account.name}</span>
-                  <span className="text-sm text-gray-500">
-                    {account.email} • {account.role}
-                  </span>
-                </div>
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
-
         <div className="text-center">
-          <Link href="/login-preview" className="text-sm text-blue-600 hover:text-blue-500">
-            Need help? View login preview guide
+          <Link href="/register" className="text-sm text-blue-600 hover:text-blue-500">
+            Don&apos;t have an account? Register here
           </Link>
         </div>
       </div>

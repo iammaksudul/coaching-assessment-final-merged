@@ -1,17 +1,31 @@
 import { NextResponse } from "next/server"
 import { headers } from "next/headers"
+import Stripe from "stripe"
 
 export async function POST(req: Request) {
   const body = await req.text()
   const headersList = await headers()
   const signature = headersList.get("Stripe-Signature") as string
 
-  // When Stripe is hardened, verify the signature:
-  // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-  // const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+  let event: any
+
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET && signature) {
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+      event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET)
+    } catch (err: any) {
+      console.error("Stripe webhook signature verification failed:", err.message)
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+    }
+  } else {
+    try {
+      event = JSON.parse(body)
+    } catch {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+    }
+  }
 
   try {
-    const event = JSON.parse(body)
 
     switch (event.type) {
       case "checkout.session.completed": {
