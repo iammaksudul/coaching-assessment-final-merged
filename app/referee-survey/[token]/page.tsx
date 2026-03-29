@@ -147,32 +147,12 @@ const COACHABILITY_DOMAINS = [
 ]
 
 const getSurveyData = (token: string) => {
-  const tokenMap: Record<string, any> = {
-    "survey-token-david-2024": {
-      candidate_name: "David Martinez",
-      assessment_name: "Senior Leadership Evaluation",
-      organization_name: "Global Tech Solutions",
-      domains: COACHABILITY_DOMAINS,
-    },
-    "survey-token-alex-123": {
-      candidate_name: "Alex Johnson",
-      assessment_name: "Leadership Development Assessment",
-      organization_name: "Preview Organization",
-      domains: COACHABILITY_DOMAINS,
-    },
-    "survey-token-jennifer-789": {
-      candidate_name: "Jennifer Adams",
-      assessment_name: "Management Development Assessment",
-      organization_name: null,
-      domains: COACHABILITY_DOMAINS,
-    },
-  }
-  return tokenMap[token] || null
+  // Will be replaced by API fetch in useEffect
+  return null as any
 }
 
-// Mock API functions for saving/loading responses
+// Save/load responses from localStorage (offline-friendly, submitted to API on final submit)
 const saveResponses = async (token: string, responses: Record<string, string>) => {
-  await new Promise((r) => setTimeout(r, 600))
   localStorage.setItem(
     `referee-responses-${token}`,
     JSON.stringify({
@@ -185,7 +165,6 @@ const saveResponses = async (token: string, responses: Record<string, string>) =
 }
 
 const loadResponses = async (token: string) => {
-  await new Promise((r) => setTimeout(r, 400))
   const raw = localStorage.getItem(`referee-responses-${token}`)
   if (!raw) return { responses: {}, lastSaved: null, completedDomains: [] }
   const data = JSON.parse(raw)
@@ -224,9 +203,10 @@ export default function RefereeSurveyPage() {
   const [currentDomainIdx, setCurrentDomainIdx] = useState(0)
   const [completedDomains, setCompletedDomains] = useState<string[]>([])
   const [hasShownFinalNotification, setHasShownFinalNotification] = useState(false)
+  const [surveyData, setSurveyData] = useState<any>(null)
+  const [tokenError, setTokenError] = useState<string | null>(null)
 
   // Derived data
-  const surveyData = getSurveyData(token)
   const currentDomain = surveyData?.domains[currentDomainIdx] ?? null
   const totalQuestions = 48 // Fixed total for all surveys
   const answeredCount = Object.keys(responses).length
@@ -241,9 +221,31 @@ export default function RefereeSurveyPage() {
     return () => window.removeEventListener("resize", onResize)
   }, [])
 
-  // Load saved responses once
+  // Load saved responses and validate token via API
   useEffect(() => {
     const init = async () => {
+      // Validate token and get survey metadata from API
+      try {
+        const res = await fetch(`/api/referee-survey?token=${encodeURIComponent(token)}`)
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          setTokenError(err.error || "Invalid or expired token")
+          setIsLoading(false)
+          return
+        }
+        const data = await res.json()
+        setSurveyData({
+          candidate_name: data.candidate_name,
+          assessment_name: data.assessment_name,
+          organization_name: data.organization_name,
+          domains: COACHABILITY_DOMAINS,
+        })
+      } catch {
+        setTokenError("Unable to validate survey token")
+        setIsLoading(false)
+        return
+      }
+
       const { responses: saved, lastSaved, completedDomains } = await loadResponses(token)
       setResponses(saved)
       setLastSaved(lastSaved)
@@ -365,19 +367,19 @@ export default function RefereeSurveyPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading David Martinez assessment...</p>
+          <p className="text-muted-foreground">Loading survey...</p>
         </div>
       </div>
     )
   }
 
-  // Invalid token
-  if (!surveyData) {
+  // Invalid or expired token
+  if (!surveyData || tokenError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
-        <h1 className="text-2xl font-semibold">Survey Not Found</h1>
-        <p className="text-muted-foreground">The survey token may be invalid or expired.</p>
-        <Button onClick={() => router.push("/dashboard")}>Return to Dashboard</Button>
+        <h1 className="text-2xl font-semibold">Survey Not Available</h1>
+        <p className="text-muted-foreground">{tokenError || "The survey token may be invalid or expired."}</p>
+        <Button onClick={() => router.push("/")}>Return Home</Button>
       </div>
     )
   }
