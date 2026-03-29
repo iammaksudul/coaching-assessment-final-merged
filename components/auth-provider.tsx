@@ -19,38 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(true) // Start with loading true
 
-  // Test accounts for preview mode with DISTINCT data
-  const testAccounts = {
-    "alex.johnson@preview.com": {
-      id: "alex-johnson-preview",
-      email: "alex.johnson@preview.com",
-      name: "Alex Johnson",
-      role: "PARTICIPANT",
-      accountType: "SELF_CREATED",
-    },
-    "employer@preview.com": {
-      id: "employer-preview",
-      email: "employer@preview.com",
-      name: "John Smith",
-      role: "EMPLOYER",
-      accountType: "EMPLOYER",
-    },
-    "sarah.wilson@preview.com": {
-      id: "sarah-wilson-preview",
-      email: "sarah.wilson@preview.com",
-      name: "Sarah Wilson",
-      role: "REFEREE", // Sarah is a referee who also has personal assessments
-      accountType: "REFEREE_PARTICIPANT",
-    },
-    "mike.chen@preview.com": {
-      id: "mike-chen-preview",
-      email: "mike.chen@preview.com",
-      name: "Mike Chen",
-      role: "ADMIN",
-      accountType: "ADMIN",
-    },
-  }
-
   // Check for existing session on mount
   // Patch fetch to auto-add x-user-id for API calls
   useEffect(() => {
@@ -98,15 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
 
-    // Check test accounts first (preview mode)
-    const testAccount = testAccounts[email as keyof typeof testAccounts]
-    if (testAccount && password === "password123") {
-      setUser(testAccount)
-      localStorage.setItem("preview-user", JSON.stringify(testAccount))
-      setIsLoading(false)
-      return true
-    }
-
     // Try real DB login
     try {
       const res = await fetch("/api/login", {
@@ -123,24 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return true
         }
       }
-    } catch {}
-
-    // Fallback: create mock user for demo
-    if (email && password) {
-      const mockUser = {
-        id: `user-${Date.now()}`,
-        email: email,
-        name: email
-          .split("@")[0]
-          .replace(".", " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
-        role: "PARTICIPANT",
-        accountType: "SELF_CREATED",
-      }
-      setUser(mockUser)
-      localStorage.setItem("preview-user", JSON.stringify(mockUser))
-      setIsLoading(false)
-      return true
+    } catch (err) {
+      console.error("Login request failed:", err)
     }
 
     setIsLoading(false)
