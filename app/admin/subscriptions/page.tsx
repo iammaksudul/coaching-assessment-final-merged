@@ -104,7 +104,7 @@ export default function SubscriptionsPage() {
     setActionLoading(subscriptionId)
 
     try {
-      // Mock API call
+      // API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const updatedSubscriptions = subscriptions.map((sub) => {

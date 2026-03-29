@@ -93,7 +93,7 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      // Google OAuth is not configured in preview mode
+      // Google OAuth is not configured
       // Show a helpful message instead
       toast({
         title: "Google Sign-In",

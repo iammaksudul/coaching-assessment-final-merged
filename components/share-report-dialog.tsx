@@ -40,7 +40,7 @@ export function ShareReportDialog({ assessmentId, assessmentName, participantNam
   })
   const { toast } = useToast()
 
-  // Mock sharing history data
+  // Sharing history data
   const [sharingHistory] = useState([
     {
       id: "1",

@@ -49,11 +49,6 @@ export default function AuthErrorPage() {
               </Button>
             </div>
 
-            {/* Preview mode notice */}
-            <div className="mt-4 rounded-lg bg-blue-50 p-3 text-center text-sm text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-              <p className="font-medium">Preview Mode</p>
-              <p>If you're seeing this error, the application is running in preview mode with limited functionality.</p>
-            </div>
           </CardContent>
         </Card>
       </div>

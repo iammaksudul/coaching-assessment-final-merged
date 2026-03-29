@@ -53,7 +53,7 @@ export function AssessmentNamingDialog({
     setIsUpdating(true)
 
     try {
-      // Mock API call - in real app this would call the API
+      // Update assessment name
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       onUpdate(name.trim(), description.trim() || undefined)

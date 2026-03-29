@@ -105,14 +105,6 @@ export default function CommissionAssessmentPage() {
         <p className="text-muted-foreground mt-2">Invite a candidate to complete a coachability assessment</p>
       </div>
 
-      {/* Preview Mode Notice */}
-      <Alert className="mb-6">
-        <AlertDescription>
-          <strong>Preview Mode:</strong> In the full system, this would create a real user account and send an actual
-          email invitation.
-        </AlertDescription>
-      </Alert>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

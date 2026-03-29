@@ -27,7 +27,7 @@ async function sendViaPostmark(data: ContactFormData): Promise<boolean> {
       email: data.email,
       message: data.message,
     })
-    return true // Return success in dev/preview mode
+    return true // Return success when Postmark not configured
   }
 
   try {

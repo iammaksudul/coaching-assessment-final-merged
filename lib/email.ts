@@ -22,7 +22,7 @@ const DEFAULT_FROM = "info@coachingdigs.com"
 export async function sendEmail(template: EmailTemplate) {
   if (!process.env.POSTMARK_API_TOKEN) {
     console.log("Email would be sent:", template)
-    return { success: true, messageId: "preview-mode" }
+    return { success: true, messageId: "no-postmark" }
   }
 
   try {

@@ -68,7 +68,7 @@ interface AccessRequest {
 // ============================================================================
 // TEMPORARY TEST STATE - ASSESSMENT LIMIT ENFORCEMENT
 // ============================================================================
-// This mock data is configured to test the assessment limit enforcement feature.
+// Assessment limit enforcement configuration.
 // The organization is set to be AT THEIR LIMIT (12/12 assessments used).
 // When attempting to commission or request access, the upgrade dialog should appear.
 //

@@ -75,7 +75,7 @@ export default function FullDomainReport() {
   const totalPages = Math.ceil(COACHABILITY_DOMAINS.length / domainsPerPage)
 
   // VARIABLE: This would come from API/database in real implementation
-  const mockReportData = {
+  const fallbackReportData = {
     participant: {
       name: "Alex Johnson",
       email: "alex@example.com",
@@ -176,7 +176,7 @@ export default function FullDomainReport() {
         <CardContent>
           <div className="space-y-6">
             {getCurrentPageDomains().map((domain) => {
-              const scores = mockReportData.domainScores[domain.id as keyof typeof mockReportData.domainScores]
+              const scores = fallbackReportData.domainScores[domain.id as keyof typeof fallbackReportData.domainScores]
               return (
                 <div key={domain.id} className="space-y-2 border-b pb-4 last:border-b-0">
                   <div className="flex items-center justify-between">

@@ -71,7 +71,6 @@ export default function CreateAssessmentPage() {
               Back to Dashboard
             </Link>
           </Button>
-          <Badge variant="secondary">Preview Mode</Badge>
         </div>
         <h1 className="text-3xl font-bold">Create New Assessment</h1>
         <p className="text-muted-foreground">Give your assessment a meaningful name to help you track your progress.</p>

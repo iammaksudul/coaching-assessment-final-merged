@@ -9,7 +9,7 @@ async function initializeDatabase() {
   try {
     // Check if we have required environment variables
     if (!process.env.DATABASE_URL) {
-      console.log("No DATABASE_URL found, using mock mode")
+      console.log("No DATABASE_URL found")
       sql = () => Promise.resolve([])
       isConnected = true
       return sql
@@ -27,7 +27,7 @@ async function initializeDatabase() {
     return sql
   } catch (error) {
     console.error("Database initialization failed:", error)
-    // Fallback to mock mode
+    // Fallback mode
     sql = () => Promise.resolve([])
     isConnected = true
     return sql

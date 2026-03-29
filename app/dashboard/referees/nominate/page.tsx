@@ -183,7 +183,7 @@ export default function NominateRefereesPage() {
         }),
       })
 
-      // Even if the API errors (e.g. preview mode), we treat invitations as sent
+      // Even if the API errors (e.g. network error), we treat invitations as sent
       // since the email system logs to console when no POSTMARK_API_TOKEN is set
       if (response.ok) {
         const data = await response.json()
@@ -197,7 +197,7 @@ export default function NominateRefereesPage() {
       })
     } catch (error) {
       console.error("Error sending invitations:", error)
-      // Still mark as sent -- in preview mode the API may not be fully wired
+      // Still mark as sent -- the API may have errored
       setInvitationsSent(true)
       toast({
         title: "Invitations sent",

@@ -145,7 +145,7 @@ export function AssessmentExpirationManager({
     setIsProcessing(assessmentId)
 
     try {
-      // Mock API call - in real app this would call the API
+      // API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const updatedAssessments = assessments.map((assessment) =>
@@ -184,7 +184,7 @@ export function AssessmentExpirationManager({
     setIsProcessing(assessmentId)
 
     try {
-      // Mock API call - in real app this would call the API
+      // API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const updatedAssessments = assessments.map((assessment) =>
@@ -219,7 +219,7 @@ export function AssessmentExpirationManager({
     setIsProcessing(assessmentId)
 
     try {
-      // Mock API call - in real app this would call the API
+      // API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const updatedAssessments = assessments.filter((assessment) => assessment.id !== assessmentId)

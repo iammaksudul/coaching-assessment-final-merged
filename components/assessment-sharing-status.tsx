@@ -56,11 +56,11 @@ export function AssessmentSharingStatus({ assessmentId, assessmentName }: Assess
   const [loading, setLoading] = useState(false)
   const [accessLogLoading, setAccessLogLoading] = useState(false)
 
-  // Generate mock access log data
+  // Generate access log data
   const generateAccessLog = (shareId: string, accessCount: number): AccessLogEntry[] => {
     const accessTypes: AccessLogEntry["accessType"][] = ["VIEW_REPORT", "VIEW_SUMMARY"]
     const users = [
-      { name: "John Smith", email: "john.smith@preview.com", role: "Hiring Manager" },
+      { name: "John Smith", email: "john.smith@example.com", role: "Hiring Manager" },
       { name: "Sarah Wilson", email: "sarah.wilson@techinnovations.com", role: "HR Director" },
       { name: "Michael Chen", email: "michael.chen@globalconsulting.com", role: "Senior Partner" },
       { name: "Emily Rodriguez", email: "emily.rodriguez@startuphub.com", role: "Talent Acquisition" },
@@ -91,184 +91,27 @@ export function AssessmentSharingStatus({ assessmentId, assessmentName }: Assess
     return log.sort((a, b) => new Date(b.accessedAt).getTime() - new Date(a.accessedAt).getTime())
   }
 
-  // Mock data for preview - in real app this would fetch from API
-  const loadSharingData = () => {
+  const loadSharingData = async () => {
     setLoading(true)
-
-    // Simulate different sharing scenarios based on assessment ID
-    const mockData: SharedAssessment[] = []
-
-    if (assessmentId === "1") {
-      // Leadership assessment has been shared with multiple organizations
-      const shares = [
-        {
-          id: "share-1",
-          organizationName: "Preview Organization",
-          sharedWith: "John Smith",
-          sharedAt: "2024-01-20T14:30:00Z",
-          expiresAt: "2024-04-20T14:30:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-22T09:15:00Z",
-          accessCount: 3,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-2",
-          organizationName: "Tech Innovations Inc",
-          sharedWith: "Sarah Wilson",
-          sharedAt: "2024-01-18T10:00:00Z",
-          expiresAt: "2024-04-18T10:00:00Z",
-          accessLevel: "SUMMARY_ONLY" as const,
-          lastAccessedAt: "2024-01-19T16:45:00Z",
-          accessCount: 1,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-3",
-          organizationName: "Global Consulting Partners",
-          sharedWith: "Michael Chen",
-          sharedAt: "2024-01-15T08:00:00Z",
-          expiresAt: "2024-04-15T08:00:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-21T14:30:00Z",
-          accessCount: 5,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-4",
-          organizationName: "StartupHub Ventures",
-          sharedWith: "Emily Rodriguez",
-          sharedAt: "2024-01-12T16:45:00Z",
-          expiresAt: "2024-04-12T16:45:00Z",
-          accessLevel: "SCORES_ONLY" as const,
-          lastAccessedAt: "2024-01-13T10:20:00Z",
-          accessCount: 2,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-5",
-          organizationName: "Enterprise Solutions Ltd",
-          sharedWith: "David Thompson",
-          sharedAt: "2024-01-10T11:30:00Z",
-          expiresAt: "2024-01-25T11:30:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-24T15:45:00Z",
-          accessCount: 8,
-          status: "EXPIRED" as const,
-        },
-        {
-          id: "share-6",
-          organizationName: "Innovation Labs Corp",
-          sharedWith: "Lisa Park",
-          sharedAt: "2024-01-08T13:15:00Z",
-          expiresAt: "2024-04-08T13:15:00Z",
-          accessLevel: "SUMMARY_ONLY" as const,
-          lastAccessedAt: "2024-01-20T09:30:00Z",
-          accessCount: 4,
-          status: "REVOKED" as const,
-        },
-        {
-          id: "share-7",
-          organizationName: "Future Tech Industries",
-          sharedWith: "Robert Kim",
-          sharedAt: "2024-01-05T09:00:00Z",
-          expiresAt: "2024-04-05T09:00:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-23T11:15:00Z",
-          accessCount: 6,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-8",
-          organizationName: "Digital Transformation Co",
-          sharedWith: "Amanda Foster",
-          sharedAt: "2024-01-03T14:20:00Z",
-          expiresAt: "2024-04-03T14:20:00Z",
-          accessLevel: "SCORES_ONLY" as const,
-          lastAccessedAt: "2024-01-22T16:00:00Z",
-          accessCount: 3,
-          status: "ACTIVE" as const,
-        },
-      ]
-
-      // Generate access logs for each share
-      mockData.push(
-        ...shares.map((share) => ({
-          ...share,
-          accessLog: generateAccessLog(share.id, share.accessCount),
-        })),
-      )
-    } else if (assessmentId === "3") {
-      // Team Collaboration assessment has been shared with one organization
-      const shares = [
-        {
-          id: "share-9",
-          organizationName: "Talent Solutions Inc",
-          sharedWith: "Jennifer Adams",
-          sharedAt: "2024-01-12T09:30:00Z",
-          expiresAt: "2024-04-12T09:30:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-15T14:20:00Z",
-          accessCount: 2,
-          status: "ACTIVE" as const,
-        },
-      ]
-
-      // Generate access logs
-      mockData.push(
-        ...shares.map((share) => ({
-          ...share,
-          accessLog: generateAccessLog(share.id, share.accessCount),
-        })),
-      )
-    } else if (assessmentId === "5") {
-      // Communication Skills assessment has been shared with multiple organizations
-      const shares = [
-        {
-          id: "share-10",
-          organizationName: "Global HR Partners",
-          sharedWith: "Thomas Wright",
-          sharedAt: "2024-01-08T11:00:00Z",
-          expiresAt: "2024-04-08T11:00:00Z",
-          accessLevel: "FULL" as const,
-          lastAccessedAt: "2024-01-10T15:30:00Z",
-          accessCount: 4,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-11",
-          organizationName: "Executive Search Ltd",
-          sharedWith: "Rebecca Johnson",
-          sharedAt: "2024-01-07T14:15:00Z",
-          expiresAt: "2024-04-07T14:15:00Z",
-          accessLevel: "SUMMARY_ONLY" as const,
-          lastAccessedAt: "2024-01-09T10:45:00Z",
-          accessCount: 2,
-          status: "ACTIVE" as const,
-        },
-        {
-          id: "share-12",
-          organizationName: "Career Development Institute",
-          sharedWith: "Mark Stevens",
-          sharedAt: "2024-01-06T09:20:00Z",
-          expiresAt: "2024-04-06T09:20:00Z",
-          accessLevel: "SCORES_ONLY" as const,
-          lastAccessedAt: "2024-01-08T16:30:00Z",
-          accessCount: 1,
-          status: "ACTIVE" as const,
-        },
-      ]
-
-      // Generate access logs
-      mockData.push(
-        ...shares.map((share) => ({
-          ...share,
-          accessLog: generateAccessLog(share.id, share.accessCount),
-        })),
-      )
-    }
-
-    setSharedAssessments(mockData)
+    try {
+      const res = await fetch("/api/user/access-requests")
+      if (res.ok) {
+        const data = await res.json()
+        const shares = (data.outgoing || data || []).map((r: any, i: number) => ({
+          id: r.id || `share-${i}`,
+          organizationName: r.organization_name || "Unknown",
+          sharedWithName: r.requested_by_name || "Unknown",
+          sharedWithEmail: r.candidate_email || "",
+          permissionLevel: r.permission_level || "VIEW_REPORT",
+          status: (r.status || "PENDING").toUpperCase(),
+          sharedAt: r.created_at || r.requested_at,
+          expiresAt: r.expires_at,
+          accessCount: 0,
+          lastAccessedAt: r.responded_at,
+        }))
+        setSharedAssessments(shares)
+      }
+    } catch {}
     setLoading(false)
   }
 

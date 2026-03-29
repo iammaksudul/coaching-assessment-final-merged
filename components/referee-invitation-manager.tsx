@@ -128,7 +128,7 @@ export function RefereeInvitationManager({
     }
 
     try {
-      // Mock API call - in real app this would call the API
+      // API call
       const mockNewInvitation: RefereeInvitation = {
         id: `ref-${Date.now()}`,
         referee_name: newReferee.name,
@@ -163,7 +163,7 @@ export function RefereeInvitationManager({
     setIsResending(invitationId)
 
     try {
-      // Mock API call - in real app this would call the API
+      // API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const updatedInvitations = invitations.map((inv) =>

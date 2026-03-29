@@ -38,21 +38,34 @@ export default function AssessmentInvitationPage() {
 
   const fetchInvitation = async () => {
     try {
-      // Mock data for preview mode
-      const mockInvitation: InvitationData = {
-        id: "invite-123",
-        assessment_name: "Leadership Development Assessment",
-        candidate_email: "candidate@example.com",
-        candidate_name: "Jane Doe",
-        organization_name: "Preview Organization",
-        organization_contact: "John Smith (employer@preview.com)",
-        personal_message:
-          "We would like to invite you to complete a coachability assessment as part of our evaluation process. This assessment will help us understand your development potential and coaching readiness.",
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        status: "PENDING",
+      const res = await fetch(`/api/assessments/accept-invitation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, action: "fetch" }),
+      })
+      // If the API doesn't support fetch action, try querying sponsored_assessments
+      if (!res.ok) {
+        setError("Invitation not found or expired")
+        setLoading(false)
+        return
       }
-
-      setInvitation(mockInvitation)
+      const data = await res.json()
+      if (data.invitation) {
+        setInvitation(data.invitation)
+      } else {
+        // Construct from response
+        setInvitation({
+          id: token,
+          assessment_name: data.assessment_name || "Coachability Assessment",
+          candidate_email: data.candidate_email || "",
+          candidate_name: data.candidate_name || "",
+          organization_name: data.organization_name || "",
+          organization_contact: "",
+          personal_message: data.message || "You have been invited to complete a coachability assessment.",
+          expires_at: data.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: data.status || "PENDING",
+        })
+      }
     } catch (err) {
       setError("Failed to load invitation details")
     } finally {
@@ -67,11 +80,17 @@ export default function AssessmentInvitationPage() {
   const handleConsent = async (consents: any) => {
     setAccepting(true)
     try {
-      // Mock acceptance - in real app would call API
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Redirect to assessment
-      router.push("/assessment-preview")
+      const res = await fetch("/api/assessments/accept-invitation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, consents }),
+      })
+      const data = await res.json()
+      if (data.success && data.redirect_url) {
+        router.push(data.redirect_url)
+      } else {
+        router.push("/dashboard")
+      }
     } catch (err) {
       setError("Failed to accept invitation")
     } finally {
@@ -80,15 +99,14 @@ export default function AssessmentInvitationPage() {
   }
 
   const handleDecline = async () => {
-    if (!confirm("Are you sure you want to decline this assessment invitation?")) {
-      return
-    }
-
+    if (!confirm("Are you sure you want to decline this assessment invitation?")) return
     setDeclining(true)
     try {
-      // Mock decline - in real app would call API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      await fetch("/api/sponsored-requests/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: token, action: "decline" }),
+      })
       setInvitation((prev) => (prev ? { ...prev, status: "DECLINED" } : null))
     } catch (err) {
       setError("Failed to decline invitation")

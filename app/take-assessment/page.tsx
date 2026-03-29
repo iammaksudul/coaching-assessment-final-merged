@@ -288,11 +288,11 @@ export default function TakeAssessmentPage() {
       }
 
       // Redirect to referee nomination for this assessment
-      router.push(`/dashboard/referees/nominate?assessmentId=${assessmentId || `preview-${Date.now()}`}`)
+      router.push(`/dashboard/referees/nominate?assessmentId=${assessmentId || `temp-${Date.now()}`}`)
     } catch (error) {
       console.error("Failed to submit assessment:", error)
       // Still redirect even if save fails -- responses were auto-saved along the way
-      router.push(`/dashboard/referees/nominate?assessmentId=${assessmentId || `preview-${Date.now()}`}`)
+      router.push(`/dashboard/referees/nominate?assessmentId=${assessmentId || `temp-${Date.now()}`}`)
     } finally {
       setIsSubmitting(false)
     }
