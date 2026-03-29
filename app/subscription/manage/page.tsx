@@ -31,22 +31,28 @@ export default function ManageSubscriptionPage() {
 
   const fetchSubscription = async () => {
     try {
-      // Mock subscription data for preview
-      const mockSubscription = {
-        id: "sub_1234567890",
-        tier: "TIER_6_12",
-        status: "ACTIVE",
-        billing_cycle: "monthly",
-        current_period_start: "2024-01-01T00:00:00Z",
-        current_period_end: "2024-02-01T00:00:00Z",
-        assessments_used_current_period: 3,
-        assessments_limit: 12,
-        total_assessments: 15,
-        next_billing_date: "2024-02-01T00:00:00Z",
-        amount: 89,
+      const res = await fetch("/api/user/subscription")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.subscription) {
+          setSubscription(data.subscription)
+        } else {
+          // Free plan — no active subscription
+          setSubscription({
+            id: "free",
+            tier: "FREE",
+            status: "ACTIVE",
+            billing_cycle: "monthly",
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 30 * 86400000).toISOString(),
+            assessments_used_current_period: data.assessments_used || 0,
+            assessments_limit: data.assessments_limit || 1,
+            total_assessments: data.assessments_used || 0,
+            next_billing_date: null,
+            amount: 0,
+          })
+        }
       }
-
-      setSubscription(mockSubscription)
     } catch (error) {
       console.error("Error fetching subscription:", error)
       toast({

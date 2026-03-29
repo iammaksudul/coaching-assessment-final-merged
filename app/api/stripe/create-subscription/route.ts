@@ -2,9 +2,9 @@ import { NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/get-auth-user"
 import Stripe from "stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-  apiVersion: "2023-10-16",
-})
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +15,10 @@ export async function POST(request: Request) {
     }
 
     const { priceId, billingCycle, organizationId } = await request.json()
+
+    if (!stripe) {
+      return NextResponse.json({ error: "Stripe not configured" }, { status: 503 })
+    }
 
     // Create or retrieve Stripe customer
     const customer = await stripe.customers.create({

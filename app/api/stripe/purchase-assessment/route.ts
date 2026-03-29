@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import Stripe from "stripe"
 
 export async function POST(req: Request) {
   try {
@@ -9,35 +10,32 @@ export async function POST(req: Request) {
 
     const { organizationId, returnUrl } = await req.json()
 
-    // When Stripe is hardened, this will create a real Checkout Session:
-    //
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-    // const session = await stripe.checkout.sessions.create({
-    //   mode: "payment",
-    //   line_items: [{
-    //     price_data: {
-    //       currency: "usd",
-    //       unit_amount: 900, // $9.00
-    //       product_data: {
-    //         name: "Extra Assessment Credit",
-    //         description: "One additional coachability assessment credit",
-    //       },
-    //     },
-    //     quantity: 1,
-    //   }],
-    //   metadata: { organizationId, userId, type: "one_off_assessment" },
-    //   success_url: `${returnUrl || process.env.NEXTAUTH_URL}/organization-dashboard?purchase=success`,
-    //   cancel_url: `${returnUrl || process.env.NEXTAUTH_URL}/organization-dashboard?purchase=cancelled`,
-    // })
-    // return NextResponse.json({ url: session.url })
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json({ error: "Stripe not configured" }, { status: 503 })
+    }
 
-    // Preview mode: simulate purchase success immediately
-    return NextResponse.json({
-      success: true,
-      preview: true,
-      creditsAdded: 1,
-      message: "Assessment credit purchased for $9.00 (preview mode)",
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          unit_amount: 900,
+          product_data: {
+            name: "Extra Assessment Credit",
+            description: "One additional coachability assessment credit",
+          },
+        },
+        quantity: 1,
+      }],
+      metadata: { organizationId: organizationId || "", userId, type: "one_off_assessment" },
+      success_url: `${returnUrl || baseUrl}/organization-dashboard?purchase=success`,
+      cancel_url: `${returnUrl || baseUrl}/organization-dashboard?purchase=cancelled`,
     })
+
+    return NextResponse.json({ url: session.url })
   } catch (error) {
     console.error("Purchase assessment error:", error)
     return NextResponse.json({ error: "Failed to create purchase session" }, { status: 500 })

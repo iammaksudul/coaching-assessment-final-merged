@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/components/auth-provider"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -19,7 +21,7 @@ const profileSchema = z.object({
 
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(8, { message: "Password must be at least 8 characters" }),
+    currentPassword: z.string().min(1, { message: "Current password is required" }),
     newPassword: z.string().min(8, { message: "Password must be at least 8 characters" }),
     confirmPassword: z.string(),
   })
@@ -33,80 +35,70 @@ type PasswordFormValues = z.infer<typeof passwordSchema>
 
 export default function SettingsPage() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: "Alex Johnson",
-      email: "alex@example.com",
-    },
+    defaultValues: { name: "", email: "" },
   })
 
-  const passwordForm = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-  })
+  // Load real user data
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({ name: user.name || "", email: user.email || "" })
+    }
+  }, [user])
 
   async function onProfileSubmit(data: ProfileFormValues) {
     setIsUpdatingProfile(true)
-
     try {
-      // In a real implementation, this would send the data to your API
-      // await fetch("/api/user/profile", {
-      //   method: "PUT",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(data),
-      // })
-
-      // For now, we'll just simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       })
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Your profile could not be updated. Please try again.",
-        variant: "destructive",
-      })
+      const result = await res.json()
+      if (res.ok) {
+        // Update localStorage so auth-provider picks up new name/email
+        const stored = localStorage.getItem("preview-user")
+        if (stored) {
+          const u = JSON.parse(stored)
+          u.name = data.name
+          u.email = data.email
+          localStorage.setItem("preview-user", JSON.stringify(u))
+        }
+        toast({ title: "Profile updated", description: result.message })
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to update profile", variant: "destructive" })
     } finally {
       setIsUpdatingProfile(false)
     }
   }
 
+  const passwordForm = useForm<PasswordFormValues>({ resolver: zodResolver(passwordSchema) })
+
   async function onPasswordSubmit(data: PasswordFormValues) {
     setIsUpdatingPassword(true)
-
     try {
-      // In a real implementation, this would send the data to your API
-      // await fetch("/api/user/password", {
-      //   method: "PUT",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(data),
-      // })
-
-      // For now, we'll just simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been updated successfully.",
+      const res = await fetch("/api/user/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: data.currentPassword, newPassword: data.newPassword }),
       })
-
-      passwordForm.reset()
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Your password could not be updated. Please try again.",
-        variant: "destructive",
-      })
+      const result = await res.json()
+      if (res.ok) {
+        toast({ title: "Password updated", description: result.message })
+        passwordForm.reset()
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to update password", variant: "destructive" })
     } finally {
       setIsUpdatingPassword(false)
     }
@@ -114,14 +106,21 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
       <h1 className="text-3xl font-bold">Settings</h1>
-      <p className="text-muted-foreground">Manage your account settings and preferences.</p>
+      <p className="text-muted-foreground">Manage your account settings.</p>
 
       <Tabs defaultValue="profile" className="mt-4">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="password">Password</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
@@ -192,47 +191,6 @@ export default function SettingsPage() {
                 </Button>
               </CardFooter>
             </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Manage your application preferences.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select defaultValue="en">
-                  <SelectTrigger id="language">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
-                <Select defaultValue="system">
-                  <SelectTrigger id="theme">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Save Preferences</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

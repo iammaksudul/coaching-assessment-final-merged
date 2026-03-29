@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // Extend grace period
     await sql`
       UPDATE subscriptions 
-      SET grace_period_ends_at = CURRENT_TIMESTAMP + INTERVAL '${days} days'
+      SET grace_period_ends_at = CURRENT_TIMESTAMP + make_interval(days => ${parseInt(days)})
       WHERE stripe_subscription_id = ${subscriptionId}
     `
 
