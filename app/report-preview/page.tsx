@@ -573,7 +573,7 @@ export default function ReportPreviewPage() {
   const totalPages = Math.ceil(COACHABILITY_DOMAINS.length / domainsPerPage)
 
   useEffect(() => {
-    console.log("Report preview page loaded, user:", user)
+    console.log("Report page loaded, user:", user)
 
     if (!user) {
       console.log("No user found, redirecting to login")
@@ -708,7 +708,7 @@ export default function ReportPreviewPage() {
           </div>
           <div className="flex gap-2">
             <ShareReportDialog
-              assessmentId="preview-assessment"
+              assessmentId="sample-assessment"
               assessmentName="Coachability Assessment Report"
               participantName={user?.name || "Alex Johnson"}
             />

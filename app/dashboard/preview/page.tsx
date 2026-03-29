@@ -34,10 +34,10 @@ type RefereeInvitation = {
   relationship: string
 }
 
-const getUserMockData = (userName: string) => {
+const getUserSampleData = (userName: string) => {
   const trimmedUserName = userName?.trim()
 
-  // Different mock data based on user name
+  // Different sample data based on user name
   if (trimmedUserName === "Alex Johnson") {
     return {
       assessments: [
@@ -153,9 +153,9 @@ export default function DashboardPreviewPage() {
     if (status === "loading") return
     if (!userName) return
 
-    const mockData = getUserMockData(userName)
-    setAssessments(mockData.assessments)
-    setRefereeInvitations(mockData.refereeInvitations)
+    const sampleData = getUserSampleData(userName)
+    setAssessments(sampleData.assessments)
+    setRefereeInvitations(sampleData.refereeInvitations)
   }, [userName, status]) // Depend on primitive values, not objects
 
   const completedAssessments = assessments.filter((a) => a.status === "COMPLETED").length

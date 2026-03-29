@@ -11,28 +11,28 @@ export default function LoginPreview() {
 
   const testAccounts = [
     {
-      id: "alex-johnson-preview",
+      id: "alex-johnson-sample",
       name: "Alex Johnson",
       email: "alex.johnson@example.com",
       role: "PARTICIPANT",
       description: "Candidate with multiple assessments",
     },
     {
-      id: "employer-preview",
+      id: "employer-sample",
       name: "John Smith",
       email: "employer@example.com",
       role: "EMPLOYER",
       description: "Employer account with organization access",
     },
     {
-      id: "sarah-williams-preview",
+      id: "sarah-williams-sample",
       name: "Sarah Williams",
       email: "sarah.williams@example.com",
       role: "PARTICIPANT",
       description: "Candidate with pending assessments",
     },
     {
-      id: "admin-preview",
+      id: "admin-sample",
       name: "Admin User",
       email: "admin@example.com",
       role: "ADMIN",
@@ -44,7 +44,7 @@ export default function LoginPreview() {
     setLoading(userId)
 
     // In a real implementation, this would authenticate the user
-    // For preview, we'll just redirect to the dashboard
+    // Redirect to the dashboard
     setTimeout(() => {
       router.push("/dashboard")
     }, 1000)

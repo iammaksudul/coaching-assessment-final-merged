@@ -163,7 +163,7 @@ const likertOptions = [
 ]
 
 export default function AssessmentPreviewPage() {
-  // For preview, we'll show the first domain but indicate there are 12 total
+  // We show the first domain but indicate there are 12 total
   const currentDomain = COMPLETE_ASSESSMENT_DATA[0]
   const totalDomains = COMPLETE_ASSESSMENT_DATA.length
   const totalQuestions = COMPLETE_ASSESSMENT_DATA.reduce((sum, domain) => sum + domain.questions.length, 0)
@@ -201,7 +201,7 @@ export default function AssessmentPreviewPage() {
               <strong>Complete Assessment:</strong> {totalDomains} domains • {totalQuestions} total questions
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              This preview shows Domain 1. The full assessment includes all {totalDomains} domains.
+              This shows Domain 1. The full assessment includes all {totalDomains} domains.
             </p>
           </div>
 

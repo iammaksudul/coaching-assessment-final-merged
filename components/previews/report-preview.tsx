@@ -76,7 +76,7 @@ export default function ReportPreview() {
   const totalPages = Math.ceil(COACHABILITY_DOMAINS.length / domainsPerPage)
 
   // VARIABLE: This would come from API/database in real implementation
-  const mockReportData = {
+  const sampleReportData = {
     participant: {
       name: "Alex Johnson",
       email: "alex@example.com",
@@ -172,15 +172,15 @@ export default function ReportPreview() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="font-medium">Name:</span>
-                    <span>{mockReportData.participant.name}</span>
+                    <span>{sampleReportData.participant.name}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Email:</span>
-                    <span>{mockReportData.participant.email}</span>
+                    <span>{sampleReportData.participant.email}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Assessment Date:</span>
-                    <span>{mockReportData.participant.assessmentDate}</span>
+                    <span>{sampleReportData.participant.assessmentDate}</span>
                   </div>
                 </div>
               </CardContent>
@@ -193,7 +193,7 @@ export default function ReportPreview() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {mockReportData.referees.map((referee) => (
+                  {sampleReportData.referees.map((referee) => (
                     <div className="flex justify-between" key={referee.name}>
                       <span className="font-medium">{referee.name}</span>
                       <span>{referee.relationship}</span>
@@ -212,15 +212,15 @@ export default function ReportPreview() {
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <div className="flex w-full max-w-md items-center justify-between rounded-lg bg-muted p-4">
                     <div className="text-center">
-                      <div className="text-3xl font-bold">{mockReportData.overallScores.self}</div>
+                      <div className="text-3xl font-bold">{sampleReportData.overallScores.self}</div>
                       <div className="text-sm text-muted-foreground">Self Score</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-3xl font-bold">{mockReportData.overallScores.referee}</div>
+                      <div className="text-3xl font-bold">{sampleReportData.overallScores.referee}</div>
                       <div className="text-sm text-muted-foreground">Referee Score</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-3xl font-bold">{mockReportData.overallScores.combined}</div>
+                      <div className="text-3xl font-bold">{sampleReportData.overallScores.combined}</div>
                       <div className="text-sm text-muted-foreground">Combined</div>
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export default function ReportPreview() {
             <CardContent>
               <div className="space-y-6">
                 {getCurrentPageDomains().map((domain) => {
-                  const scores = mockReportData.domainScores[domain.id as keyof typeof mockReportData.domainScores]
+                  const scores = sampleReportData.domainScores[domain.id as keyof typeof sampleReportData.domainScores]
                   return (
                     <div key={domain.id} className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -348,7 +348,7 @@ export default function ReportPreview() {
                       <div className="relative h-2 flex-1 rounded-full bg-muted">
                         <div
                           className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary"
-                          style={{ left: `${mockReportData.coachFit.directSupportive * 100}%` }}
+                          style={{ left: `${sampleReportData.coachFit.directSupportive * 100}%` }}
                         ></div>
                       </div>
                       <span className="text-sm">Direct</span>
@@ -361,7 +361,7 @@ export default function ReportPreview() {
                       <div className="relative h-2 flex-1 rounded-full bg-muted">
                         <div
                           className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary"
-                          style={{ left: `${mockReportData.coachFit.challengingReflective * 100}%` }}
+                          style={{ left: `${sampleReportData.coachFit.challengingReflective * 100}%` }}
                         ></div>
                       </div>
                       <span className="text-sm">Challenging</span>
@@ -374,7 +374,7 @@ export default function ReportPreview() {
                       <div className="relative h-2 flex-1 rounded-full bg-muted">
                         <div
                           className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary"
-                          style={{ left: `${mockReportData.coachFit.structuredFlexible * 100}%` }}
+                          style={{ left: `${sampleReportData.coachFit.structuredFlexible * 100}%` }}
                         ></div>
                       </div>
                       <span className="text-sm">Structured</span>
@@ -387,7 +387,7 @@ export default function ReportPreview() {
                       <div className="relative h-2 flex-1 rounded-full bg-muted">
                         <div
                           className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/4 rounded-full bg-primary"
-                          style={{ left: `${mockReportData.coachFit.taskRelationship * 100}%` }}
+                          style={{ left: `${sampleReportData.coachFit.taskRelationship * 100}%` }}
                         ></div>
                       </div>
                       <span className="text-sm">Task</span>
@@ -396,7 +396,7 @@ export default function ReportPreview() {
                 </div>
                 <div className="rounded-lg bg-muted p-4">
                   <h3 className="mb-2 font-medium">Preferred Coaching Style</h3>
-                  <p>{mockReportData.coachFit.preferredStyle}</p>
+                  <p>{sampleReportData.coachFit.preferredStyle}</p>
                 </div>
               </div>
             </CardContent>
@@ -411,7 +411,7 @@ export default function ReportPreview() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-4">
-                {mockReportData.recommendations.map((recommendation, index) => (
+                {sampleReportData.recommendations.map((recommendation, index) => (
                   <li className="flex gap-2" key={index}>
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                       {index + 1}
