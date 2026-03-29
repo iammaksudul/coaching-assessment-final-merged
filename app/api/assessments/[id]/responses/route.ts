@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       savedResponses.push(savedResponse)
     }
 
-    // Update assessment status to completed
+    // Update assessment status — self-assessment done, now awaiting referees
     await updateAssessmentStatus(assessmentId, "COMPLETED")
 
     return NextResponse.json(

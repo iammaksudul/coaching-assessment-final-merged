@@ -111,15 +111,17 @@ export default function ReportDetailPage() {
           const domainLabels: Record<string, string> = {}
           COACHABILITY_DOMAINS.forEach(d => { domainLabels[d.id] = d.name })
 
-          const recommendations = sorted.slice(0, 3).map((s, i) => ({
-            text: `Focus on developing your ${domainLabels[s.domain] || s.domain} skills — this is one of your lower-scoring areas.`,
-            domain: domainLabels[s.domain] || s.domain,
-            priority: i === 0 ? "High" : i === 1 ? "High" : "Medium",
-          })).concat(sorted.slice(-2).reverse().map(s => ({
-            text: `Your ${domainLabels[s.domain] || s.domain} is a strength — continue leveraging this in coaching.`,
-            domain: domainLabels[s.domain] || s.domain,
-            priority: "Low",
-          })))
+          const recommendations = (data.hasData && sorted.some((s: any) => s.avg > 0))
+            ? sorted.slice(0, 3).map((s, i) => ({
+                text: `Focus on developing your ${domainLabels[s.domain] || s.domain} skills — this is one of your lower-scoring areas.`,
+                domain: domainLabels[s.domain] || s.domain,
+                priority: i === 0 ? "High" : i === 1 ? "High" : "Medium",
+              })).concat(sorted.slice(-2).reverse().map(s => ({
+                text: `Your ${domainLabels[s.domain] || s.domain} is a strength — continue leveraging this in coaching.`,
+                domain: domainLabels[s.domain] || s.domain,
+                priority: "Low",
+              })))
+            : []
 
           // Derive coach-fit from domain scores
           const selfAvg = (d: string) => scores[d]?.self || 3
@@ -260,6 +262,15 @@ export default function ReportDetailPage() {
                 Dashboard
               </Button>
             </Link>
+            <div className="h-4 w-px bg-border" />
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+              const link = document.createElement('a')
+              link.href = `/api/assessments/${assessmentId}/pdf`
+              link.download = `coachability-report.pdf`
+              link.click()
+            }}>
+              Download PDF
+            </Button>
           </div>
 
           <div className="space-y-2">
@@ -281,6 +292,24 @@ export default function ReportDetailPage() {
             participantName={user.name}
           />
         </div>
+
+        {!reportData.hasData && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">No response data available</p>
+                  <p className="text-sm text-amber-600">
+                    This assessment has {reportData.selfResponseCount || 0} self-responses and {reportData.refereeResponseCount || 0} referee responses.
+                    {reportData.selfResponseCount === 0 && " Complete the assessment to see your scores."}
+                    {reportData.selfResponseCount > 0 && reportData.refereeResponseCount === 0 && " Waiting for referee responses to generate a full report."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="summary">
           <TabsList className="mb-4">

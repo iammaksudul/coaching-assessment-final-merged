@@ -88,10 +88,10 @@ export default function ReportsPage() {
                       variant="outline"
                       size="icon"
                       onClick={() => {
-                        const w = window.open(`/dashboard/reports/${report.id}`, '_blank')
-                        if (w) {
-                          w.addEventListener('load', () => setTimeout(() => w.print(), 500))
-                        }
+                        const link = document.createElement('a')
+                        link.href = `/api/assessments/${report.id}/pdf`
+                        link.download = `coachability-report-${report.id}.pdf`
+                        link.click()
                       }}
                     >
                       <Download className="h-4 w-4" />

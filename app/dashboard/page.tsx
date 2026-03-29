@@ -460,7 +460,7 @@ export default function DashboardPage() {
                       <TableHead className="w-[300px]">Assessment Details</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-center">Referees</TableHead>
-                      <TableHead className="text-center">Completion</TableHead>
+                      <TableHead className="text-center">Referee Progress</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Updated</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
