@@ -70,17 +70,17 @@ export async function POST(req: Request) {
     for (const [questionId, answer] of Object.entries(responses)) {
       try {
         await sql`
-          INSERT INTO responses (assessment_id, question_id, answer, respondent_type, respondent_token)
-          VALUES (${invitation.assessment_id}, ${questionId}, ${answer}, 'REFEREE', ${token})
+          INSERT INTO responses (assessment_id, question_id, value, answer, respondent_type, respondent_token, response_type)
+          VALUES (${invitation.assessment_id}, ${questionId}, ${String(answer)}, ${String(answer)}, 'REFEREE', ${token}, 'REFEREE')
           ON CONFLICT (assessment_id, question_id, COALESCE(respondent_token, '')) 
-          DO UPDATE SET answer = ${answer}, updated_at = NOW()
+          DO UPDATE SET value = ${String(answer)}, answer = ${String(answer)}, updated_at = NOW()
         `
       } catch {
         // Table may not have the exact schema, try simpler insert
         try {
           await sql`
-            INSERT INTO responses (assessment_id, question_id, answer)
-            VALUES (${invitation.assessment_id}, ${questionId}, ${answer})
+            INSERT INTO responses (assessment_id, question_id, value, response_type)
+            VALUES (${invitation.assessment_id}, ${questionId}, ${String(answer)}, 'REFEREE')
           `
         } catch (e2) {
           console.error("Error saving response:", e2)
