@@ -97,88 +97,57 @@ export default function ReportDetailPage() {
       return
     }
 
-    // Verify user has access to this specific assessment
-    // In a real app, this would check the database
-    console.log(`User ${user.email} accessing assessment ${assessmentId}`)
+    const fetchReport = async () => {
+      try {
+        const res = await fetch(`/api/assessments/${assessmentId}/report`)
+        if (res.ok) {
+          const data = await res.json()
+          // Generate recommendations from scores
+          const scores = data.domainScores || {}
+          const sorted = Object.entries(scores)
+            .map(([domain, s]: [string, any]) => ({ domain, avg: ((s.self || 0) + (s.referee || 0)) / 2 }))
+            .sort((a, b) => a.avg - b.avg)
 
-    setTimeout(() => {
-      // Mock data with all 12 domains
-      const mockReportData = {
-        id: params.id,
-        title: "Coachability Assessment - May 2023",
-        createdAt: "2023-05-20T15:30:00Z",
-        participant: {
-          name: "Alex Johnson",
-          email: "alex@example.com",
-        },
-        referees: [
-          { name: "Jane Smith", relationship: "Manager" },
-          { name: "John Doe", relationship: "Colleague" },
-          { name: "Sarah Williams", relationship: "Mentor" },
-        ],
-        domainScores: {
-          "openness-to-feedback": { self: 4.2, referee: 3.8 },
-          "self-awareness": { self: 3.5, referee: 3.7 },
-          "learning-orientation": { self: 4.5, referee: 4.3 },
-          "change-readiness": { self: 3.8, referee: 3.5 },
-          "emotional-regulation": { self: 3.2, referee: 3.0 },
-          "goal-orientation": { self: 4.1, referee: 4.0 },
-          resilience: { self: 3.7, referee: 3.9 },
-          "communication-skills": { self: 3.9, referee: 3.6 },
-          "relationship-building": { self: 4.0, referee: 4.2 },
-          accountability: { self: 4.3, referee: 4.1 },
-          "growth-mindset": { self: 4.4, referee: 4.2 },
-          "action-orientation": { self: 3.6, referee: 3.4 },
-        },
-        coachFit: {
-          directScore: 3.5,
-          supportiveScore: 4.0,
-          challengingScore: 4.2,
-          reflectiveScore: 3.8,
-          structuredScore: 3.0,
-          flexibleScore: 4.0,
-          taskScore: 2.5,
-          relationshipScore: 4.5,
-          preferredStyle:
-            "You prefer a coach who provides balanced challenge and reflection, with flexible structure and strong focus on relationship building.",
-        },
-        recommendations: [
-          {
-            text: "Focus on improving emotional regulation through mindfulness practices or stress management techniques.",
-            domain: "Emotional Regulation",
-            priority: "High",
-          },
-          {
-            text: "Work on enhancing action orientation by setting smaller, more achievable milestones.",
-            domain: "Action Orientation",
-            priority: "High",
-          },
-          {
-            text: "Your strong learning orientation and growth mindset are significant assets for coaching success.",
-            domain: "Learning Orientation",
+          const domainLabels: Record<string, string> = {}
+          COACHABILITY_DOMAINS.forEach(d => { domainLabels[d.id] = d.name })
+
+          const recommendations = sorted.slice(0, 3).map((s, i) => ({
+            text: `Focus on developing your ${domainLabels[s.domain] || s.domain} skills — this is one of your lower-scoring areas.`,
+            domain: domainLabels[s.domain] || s.domain,
+            priority: i === 0 ? "High" : i === 1 ? "High" : "Medium",
+          })).concat(sorted.slice(-2).reverse().map(s => ({
+            text: `Your ${domainLabels[s.domain] || s.domain} is a strength — continue leveraging this in coaching.`,
+            domain: domainLabels[s.domain] || s.domain,
             priority: "Low",
-          },
-          {
-            text: "Consider seeking more regular feedback to further develop your openness to feedback.",
-            domain: "Openness to Feedback",
-            priority: "Medium",
-          },
-          {
-            text: "Your communication skills could benefit from active listening practice in challenging conversations.",
-            domain: "Communication Skills",
-            priority: "Medium",
-          },
-          {
-            text: "Continue leveraging your accountability and goal orientation strengths in coaching relationships.",
-            domain: "Accountability",
-            priority: "Low",
-          },
-        ],
+          })))
+
+          // Derive coach-fit from domain scores
+          const selfAvg = (d: string) => scores[d]?.self || 3
+          setReportData({
+            ...data,
+            coachFit: {
+              directScore: selfAvg("openness-to-feedback"),
+              supportiveScore: selfAvg("relationship-building"),
+              challengingScore: selfAvg("resilience"),
+              reflectiveScore: selfAvg("self-awareness"),
+              structuredScore: selfAvg("goal-orientation"),
+              flexibleScore: selfAvg("change-readiness"),
+              taskScore: selfAvg("action-orientation"),
+              relationshipScore: selfAvg("communication-skills"),
+              preferredStyle: "Based on your assessment scores, your coaching style preferences are derived from your domain strengths and areas for development.",
+            },
+            recommendations,
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching report:", error)
+      } finally {
+        setIsLoading(false)
       }
-      setReportData(mockReportData)
-      setIsLoading(false)
-    }, 500)
-  }, [user, router, assessmentId, params.id])
+    }
+
+    fetchReport()
+  }, [user, router, assessmentId, authLoading])
 
   // Get domains for current page
   const getCurrentPageDomains = () => {
