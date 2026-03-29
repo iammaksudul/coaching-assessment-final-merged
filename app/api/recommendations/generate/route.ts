@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { openai } from "@ai-sdk/openai"
 
 export async function POST(req: Request) {
   try {
@@ -72,7 +73,7 @@ Format your response as JSON with this exact structure:
 Be specific, practical, and encouraging. Avoid generic platitudes. The recommendations should be implementable without a coach, though having a coach would accelerate progress.`
 
     const { text, usage, finishReason } = await generateText({
-      model: "openai/gpt-4o-mini",
+      model: openai("gpt-4o-mini"),
       prompt,
       maxOutputTokens: 2000,
       temperature: 0.7,

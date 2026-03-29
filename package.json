@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.48",
     "@auth/core": "latest",
     "@hookform/resolvers": "latest",
     "@neondatabase/serverless": "latest",
