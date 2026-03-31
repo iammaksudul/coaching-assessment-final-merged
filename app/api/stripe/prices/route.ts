@@ -1,55 +1,60 @@
 import { NextResponse } from "next/server"
 
-// Define subscription tiers with corrected pricing
 const SUBSCRIPTION_TIERS = {
   TIER_1_5: {
     name: "Starter",
     assessments: "1-5 assessments/month",
-    monthly: 3900, // $39.00 in cents
-    annual: 43300, // $433.00 in cents (7.5% discount)
+    productId: "prod_UFXB1y5VSnTxtg",
+    monthly: { id: "price_1TH27JBUtOJdpR7kWnVccGJ8", amount: 3900 },
+    annual: { id: null as string | null, amount: 43300 }, // ~7.5% discount — annual price TBD
   },
   TIER_6_12: {
     name: "Professional",
     assessments: "6-12 assessments/month",
-    monthly: 8900, // $89.00 in cents
-    annual: 98800, // $988.00 in cents
+    productId: "prod_UFXCVxwgqKlXuc",
+    monthly: { id: "price_1TH28FBUtOJdpR7kjkom9VW2", amount: 8900 },
+    annual: { id: null as string | null, amount: 98800 },
   },
   TIER_13_20: {
     name: "Business",
     assessments: "13-20 assessments/month",
-    monthly: 13900, // $139.00 in cents
-    annual: 154300, // $1,543.00 in cents
+    productId: "prod_UFXDNqxIHcg0hO",
+    monthly: { id: "price_1TH297BUtOJdpR7krKkpbg7m", amount: 13900 },
+    annual: { id: null as string | null, amount: 154300 },
   },
   TIER_21_40: {
     name: "Enterprise",
     assessments: "21-40 assessments/month",
-    monthly: 23900, // $239.00 in cents
-    annual: 265300, // $2,653.00 in cents
+    productId: "prod_UFXEMxXVLtfbcr",
+    monthly: { id: "price_1TH29yBUtOJdpR7kLYBJCyXu", amount: 23900 },
+    annual: { id: null as string | null, amount: 265300 },
   },
   TIER_40_PLUS: {
     name: "Enterprise Plus",
     assessments: "40+ assessments/month",
-    monthly: 38900, // $389.00 in cents
-    annual: 431800, // $4,318.00 in cents
+    productId: "prod_UFXFomFU9qm5zZ",
+    monthly: { id: "price_1TH2AsBUtOJdpR7kAPXYiu0Z", amount: 38900 },
+    annual: { id: null as string | null, amount: 431800 },
   },
 }
 
+export { SUBSCRIPTION_TIERS }
+
 export async function GET() {
   try {
-    // Return configured pricing tiers
     const prices = Object.entries(SUBSCRIPTION_TIERS).map(([tier, config]) => ({
       tier,
       name: config.name,
       assessments: config.assessments,
       monthly: {
-        id: `price_monthly_${tier.toLowerCase()}`,
-        amount: config.monthly,
+        id: config.monthly.id,
+        amount: config.monthly.amount,
         currency: "usd",
         interval: "month",
       },
       annual: {
-        id: `price_annual_${tier.toLowerCase()}`,
-        amount: config.annual,
+        id: config.annual.id,
+        amount: config.annual.amount,
         currency: "usd",
         interval: "year",
       },
