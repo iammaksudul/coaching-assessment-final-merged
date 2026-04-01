@@ -1,32 +1,31 @@
 "use client"
 
+import type React from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { useRouter, usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
-  Building2,
-  Home,
-  Settings,
   Menu,
-  LogOut,
-  Plus,
-  Search,
-  Bell,
-  BarChart3,
   Shield,
+  CreditCard,
+  AlertTriangle,
+  Building2,
+  Settings,
+  BarChart3,
+  LogOut,
+  Home,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { EmployerDashboard } from "@/components/employer-dashboard"
 
-const orgNavItems = [
-  { href: "/organization-dashboard", label: "Overview", icon: Home },
-  { href: "/dashboard/commission", label: "Commission", icon: Plus },
-  { href: "/dashboard/request-access", label: "Request Access", icon: Search },
-  { href: "/dashboard/access-requests", label: "Access Requests", icon: Bell },
+const adminNavItems = [
+  { href: "/dashboard", label: "Dashboard Home", icon: Home },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  { href: "/admin/payments", label: "Payment Issues", icon: AlertTriangle },
+  { href: "/pricing", label: "Pricing Plans", icon: Building2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
@@ -50,7 +49,7 @@ function NavLink({ href, label, icon: Icon, isActive, onClick }: {
   )
 }
 
-function OrgSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
+function AdminSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   const pathname = usePathname()
   const { user, signOut } = useAuth()
 
@@ -59,7 +58,7 @@ function OrgSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
       <div className="px-4 py-5 border-b">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Building2 className="h-4 w-4 text-primary-foreground" />
+            <BarChart3 className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="text-lg font-bold text-foreground">Coaching Digs</span>
         </Link>
@@ -67,16 +66,14 @@ function OrgSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
 
       <div className="px-4 pt-4">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-md">
-          <Building2 className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-semibold text-primary">Organization</span>
+          <Shield className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold text-primary">System Admin</span>
         </div>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {orgNavItems.map((item) => {
-          const isActive = item.href === "/organization-dashboard"
-            ? pathname === "/organization-dashboard"
-            : pathname.startsWith(item.href)
+        {adminNavItems.map((item) => {
+          const isActive = pathname.startsWith(item.href) && item.href !== "/dashboard"
           return (
             <NavLink
               key={item.href}
@@ -116,18 +113,18 @@ function OrgSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   )
 }
 
-export default function OrganizationDashboard() {
-  const { user } = useAuth()
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth()
   const router = useRouter()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
-    if (!user) router.push("/login")
-  }, [user, router])
+    if (!isLoading && !user) router.push("/login")
+  }, [user, isLoading, router])
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     )
@@ -136,12 +133,12 @@ export default function OrganizationDashboard() {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r shadow-sm z-30">
-        <OrgSidebarContent />
+        <AdminSidebarContent />
       </aside>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <OrgSidebarContent onItemClick={() => setSheetOpen(false)} />
+          <AdminSidebarContent onItemClick={() => setSheetOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -160,19 +157,17 @@ export default function OrganizationDashboard() {
               </Button>
               <Link href="/" className="lg:hidden flex items-center gap-2">
                 <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
-                  <Building2 className="h-3.5 w-3.5 text-primary-foreground" />
+                  <BarChart3 className="h-3.5 w-3.5 text-primary-foreground" />
                 </div>
                 <span className="font-bold text-foreground">Coaching Digs</span>
               </Link>
-              <h1 className="hidden lg:block text-lg font-semibold text-foreground">Organization Dashboard</h1>
+              <h1 className="hidden lg:block text-lg font-semibold text-foreground">Admin Panel</h1>
             </div>
             <span className="text-sm text-muted-foreground hidden md:block">{user?.name}</span>
           </div>
         </header>
 
-        <main className="flex-1 px-4 sm:px-6 py-6">
-          <EmployerDashboard />
-        </main>
+        <main className="flex-1 px-4 sm:px-6 py-6">{children}</main>
       </div>
     </div>
   )
