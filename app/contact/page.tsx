@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { BarChart3, Mail, Building2, ArrowLeft, CheckCircle, Loader2 } from "lucide-react"
 
+import { PublicHeader } from "@/components/public-header"
+
 export default function ContactPage() {
   const { toast } = useToast()
   const [submitting, setSubmitting] = useState(false)
@@ -72,25 +74,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Coaching Digs</span>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

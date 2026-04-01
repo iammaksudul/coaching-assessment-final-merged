@@ -14,6 +14,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
+import { PublicHeader } from "@/components/public-header"
+
 const registerSchema = z
   .object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -109,17 +111,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CD</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">Coaching Digs</span>
-          </Link>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

@@ -12,6 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/components/auth-provider"
 import Link from "next/link"
 
+import { PublicHeader } from "@/components/public-header"
+
 function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -48,17 +50,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="flex h-14 items-center justify-between px-6">
-          <Link href="/" className="text-xl font-bold">Coaching Digs</Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">Home</Link>
-            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
-            <Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link>
-            <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">Register</Link>
-          </nav>
-        </div>
-      </header>
+      <PublicHeader />
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { PublicHeader } from "@/components/public-header"
 
 export const metadata = {
   title: "Terms and Conditions | Coaching Digs",
@@ -9,18 +10,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Content */}
       <main className="container mx-auto px-4 py-12 max-w-4xl">
