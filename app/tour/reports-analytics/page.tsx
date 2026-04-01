@@ -6,29 +6,13 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, ArrowRight, BarChart3, Users, TrendingUp, Eye, Share2, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
+import { PublicHeader } from "@/components/public-header"
+
 export default function ReportsAnalyticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <PublicHeader />
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/tour/assessment-process">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Assessment Process
-            </Button>
-          </Link>
-          <div className="flex gap-3">
-            <Link href="/tour/overview">
-              <Button variant="ghost" size="sm">
-                Tour Overview
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Start Free Trial</Button>
-            </Link>
-          </div>
-        </div>
 
         {/* Page Title */}
         <div className="text-center mb-12">

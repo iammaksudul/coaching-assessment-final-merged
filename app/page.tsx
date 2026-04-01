@@ -7,36 +7,12 @@ import { TestimonialsCarousel } from "@/components/testimonials-carousel"
 import { Users, BarChart3, Shield, ArrowRight, TrendingUp, Clock, Award } from "lucide-react"
 import Link from "next/link"
 
+import { PublicHeader } from "@/components/public-header"
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Coaching Digs</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/tour/overview" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Platform Tour
-              </Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Pricing
-              </Link>
-              <Link href="/login" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Sign In
-              </Link>
-              <Link href="/register">
-                <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicHeader />
 
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32">
