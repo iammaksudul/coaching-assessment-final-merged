@@ -1,112 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Check, ArrowRight, BarChart3, Building2, Star } from "lucide-react"
 
-const tiers = [
-  {
-    name: "Free",
-    assessments: "1 assessment (lifetime)",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    free: true,
-    features: [
-      "1 free assessment (lifetime)",
-      "360-degree feedback collection",
-      "Basic reporting and analytics",
-      "Accept referee invitations",
-      "Community support",
-    ],
-  },
-  {
-    name: "Starter",
-    assessments: "1-5 assessments/month",
-    monthlyPrice: 39,
-    annualPrice: 433,
-    features: [
-      "Up to 5 assessments per month",
-      "360-degree feedback collection",
-      "Basic reporting and analytics",
-      "Email support",
-      "1 free assessment included",
-    ],
-  },
-  {
-    name: "Professional",
-    assessments: "6-12 assessments/month",
-    monthlyPrice: 89,
-    annualPrice: 988,
-    popular: true,
-    features: [
-      "Up to 12 assessments per month",
-      "360-degree feedback collection",
-      "Advanced reporting and analytics",
-      "Priority email support",
-      "1 free assessment included",
-    ],
-  },
-  {
-    name: "Business",
-    assessments: "13-20 assessments/month",
-    monthlyPrice: 139,
-    annualPrice: 1543,
-    features: [
-      "Up to 20 assessments per month",
-      "360-degree feedback collection",
-      "Advanced reporting and analytics",
-      "Priority email support",
-      "1 free assessment included",
-    ],
-  },
-  {
-    name: "Enterprise",
-    assessments: "21-40 assessments/month",
-    monthlyPrice: 239,
-    annualPrice: 2653,
-    features: [
-      "Up to 40 assessments per month",
-      "360-degree feedback collection",
-      "Advanced reporting and analytics",
-      "Priority email support",
-      "1 free assessment included",
-    ],
-  },
-  {
-    name: "Enterprise Plus",
-    assessments: "40+ assessments/month",
-    monthlyPrice: 389,
-    annualPrice: 4318,
-    features: [
-      "Unlimited assessments",
-      "360-degree feedback collection",
-      "Advanced reporting and analytics",
-      "Priority email support",
-      "1 free assessment included",
-    ],
-  },
-]
+interface Tier {
+  tier: string; name: string; assessments: string; isFree: boolean; isPopular: boolean
+  features: string[]
+  monthly: { id: string | null; amount: number }
+  annual: { id: string | null; amount: number }
+}
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false)
+  const [tiers, setTiers] = useState<Tier[]>([])
 
-  const getSignupUrl = (tier: any) => {
-    if (tier.free) {
-      return `/register?plan=FREE`
-    }
-    const tierValue = tier.name.toUpperCase().replace(" ", "_")
-    const tierMapping: Record<string, string> = {
-      STARTER: "TIER_1_5",
-      PROFESSIONAL: "TIER_6_12",
-      BUSINESS: "TIER_13_20",
-      ENTERPRISE: "TIER_21_40",
-      ENTERPRISE_PLUS: "TIER_40_PLUS",
-    }
+  useEffect(() => {
+    fetch("/api/stripe/prices").then(r => r.json()).then(d => setTiers(d.prices || [])).catch(() => {})
+  }, [])
+
+  const getSignupUrl = (tier: Tier) => {
+    if (tier.isFree) return `/register?plan=FREE`
     const billing = isAnnual ? "annual" : "monthly"
-    return `/employer/register?plan=${tierMapping[tierValue]}&billing=${billing}`
+    return `/employer/register?plan=${tier.tier}&billing=${billing}`
   }
 
   return (
@@ -166,17 +85,20 @@ export default function PricingPage() {
       <section className="pb-16">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-            {tiers.map((tier) => (
+            {tiers.map((tier) => {
+              const monthlyPrice = tier.monthly.amount / 100
+              const annualPrice = tier.annual.amount / 100
+              return (
               <Card
                 key={tier.name}
-                className={`relative ${tier.popular ? "border-blue-500 border-2" : ""} ${tier.free ? "border-green-500 border-2" : ""}`}
+                className={`relative ${tier.isPopular ? "border-blue-500 border-2" : ""} ${tier.isFree ? "border-green-500 border-2" : ""}`}
               >
-                {tier.popular && (
+                {tier.isPopular && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
                     Most Popular
                   </Badge>
                 )}
-                {tier.free && (
+                {tier.isFree && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600">
                     <Star className="w-3 h-3 mr-1" />
                     Free Forever
@@ -187,23 +109,23 @@ export default function PricingPage() {
                   <CardTitle className="text-xl">{tier.name}</CardTitle>
                   <p className="text-sm text-gray-600">{tier.assessments}</p>
                   <div className="mt-4">
-                    {tier.free ? (
+                    {tier.isFree ? (
                       <span className="text-3xl font-bold text-green-600">Free</span>
                     ) : (
                       <>
-                        <span className="text-3xl font-bold">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>
+                        <span className="text-3xl font-bold">${isAnnual ? annualPrice : monthlyPrice}</span>
                         <span className="text-gray-600">/{isAnnual ? "year" : "month"}</span>
                       </>
                     )}
                   </div>
-                  {isAnnual && !tier.free && (
-                    <p className="text-sm text-green-600">Save ${tier.monthlyPrice * 12 - tier.annualPrice}/year</p>
+                  {isAnnual && !tier.isFree && (
+                    <p className="text-sm text-green-600">Save ${Math.round(monthlyPrice * 12 - annualPrice)}/year</p>
                   )}
                 </CardHeader>
 
                 <CardContent className="space-y-4">
                   <ul className="space-y-2">
-                    {tier.features.map((feature, index) => (
+                    {(tier.features || []).map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <Check className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -213,16 +135,17 @@ export default function PricingPage() {
 
                   <Button
                     asChild
-                    className={`w-full ${tier.popular ? "bg-blue-600 hover:bg-blue-700" : ""} ${tier.free ? "bg-green-600 hover:bg-green-700" : ""}`}
+                    className={`w-full ${tier.isPopular ? "bg-blue-600 hover:bg-blue-700" : ""} ${tier.isFree ? "bg-green-600 hover:bg-green-700" : ""}`}
                   >
                     <Link href={getSignupUrl(tier)}>
-                      {tier.free ? "Start Free" : "Get Started"}
+                      {tier.isFree ? "Start Free" : "Get Started"}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>

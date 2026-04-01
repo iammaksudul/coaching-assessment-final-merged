@@ -47,7 +47,7 @@ const adminNavItems = [
   { href: "/dashboard", label: "Admin Dashboard", icon: Shield },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/payments", label: "Payment Issues", icon: AlertTriangle },
-  { href: "/pricing", label: "Pricing Plans", icon: Building2 },
+  { href: "/admin/pricing", label: "Manage Pricing", icon: Building2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 

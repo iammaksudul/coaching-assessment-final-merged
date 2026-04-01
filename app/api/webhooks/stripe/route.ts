@@ -2,13 +2,15 @@ import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 import Stripe from "stripe"
 import { sql } from "@/lib/db"
-import { SUBSCRIPTION_TIERS } from "@/app/api/stripe/prices/route"
 
-// Map Stripe price IDs back to our tier keys
-const PRICE_TO_TIER: Record<string, string> = {}
-for (const [tier, config] of Object.entries(SUBSCRIPTION_TIERS)) {
-  if (config.monthly.id) PRICE_TO_TIER[config.monthly.id] = tier
-  if (config.annual.id) PRICE_TO_TIER[config.annual.id] = tier
+async function getPriceToTierMap(): Promise<Record<string, string>> {
+  const tiers = await sql`SELECT id, stripe_monthly_price_id, stripe_annual_price_id FROM pricing_tiers WHERE active = true`
+  const map: Record<string, string> = {}
+  for (const t of tiers) {
+    if (t.stripe_monthly_price_id) map[t.stripe_monthly_price_id] = t.id
+    if (t.stripe_annual_price_id) map[t.stripe_annual_price_id] = t.id
+  }
+  return map
 }
 
 export async function POST(req: Request) {
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
         const sub = event.data?.object
         const metadata = sub?.metadata || {}
         const priceId = sub?.items?.data?.[0]?.price?.id
-        const tier = priceId ? PRICE_TO_TIER[priceId] : null
+        const tier = priceId ? (await getPriceToTierMap())[priceId] : null
         const orgId = metadata.organizationId
 
         if (orgId && tier) {
