@@ -163,8 +163,20 @@ export default function EmployerRegisterPage() {
   const isFreeAccount = formData.subscriptionTier === "FREE"
 
   return (
-    <div className="container flex min-h-screen w-screen flex-col items-center justify-center py-8">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[600px]">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <header className="border-b bg-white">
+        <div className="flex h-14 items-center justify-between px-6">
+          <Link href="/" className="text-xl font-bold">Coaching Digs</Link>
+          <nav className="flex items-center gap-4 text-sm">
+            <Link href="/" className="text-gray-600 hover:text-gray-900">Home</Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link>
+            <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">Sign In</Link>
+          </nav>
+        </div>
+      </header>
+      <div className="flex-1 flex items-center justify-center py-12 px-4">
+      <div className="mx-auto w-full max-w-[600px] space-y-6">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
             {isFreeAccount ? "Create Free Account" : "Create Organization Account"}
@@ -361,6 +373,7 @@ export default function EmployerRegisterPage() {
             </form>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )
