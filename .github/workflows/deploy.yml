@@ -34,7 +34,7 @@ jobs:
             fi
 
             # Install dependencies
-            npm ci --production=false
+            npm install
 
             # Create .env from secrets
             cat > .env.local << 'ENVEOF'
