@@ -43,8 +43,8 @@ jobs:
             # Remove leading whitespace from heredoc
             sed -i 's/^[[:space:]]*//' .env.local
 
-            # Build
-            npm run build
+            # Build using local next binary explicitly
+            ./node_modules/.bin/next build
 
             # Restart with PM2
             pm2 describe coaching-digs > /dev/null 2>&1 && pm2 restart coaching-digs || pm2 start npm --name "coaching-digs" -- start
