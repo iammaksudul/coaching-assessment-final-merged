@@ -160,7 +160,7 @@ export async function createAssessment(userId: string, name?: string, sponsoredB
   try {
   const result = await sql`
   INSERT INTO assessments (user_id, name, sponsored_by_organization)
-  VALUES (${userId}, ${name || "Untitled Assessment"}, ${sponsoredByOrganization || null})
+  VALUES (${userId}, ${name || "Coachability Assessment"}, ${sponsoredByOrganization || null})
   RETURNING id, user_id, name, assessment_type, status, sponsored_by_organization, created_at
   `
   return result[0]
@@ -170,7 +170,7 @@ export async function createAssessment(userId: string, name?: string, sponsoredB
   return {
     id: `assessment-${userId}-${Date.now()}`,
     user_id: userId,
-    name: name || "Untitled Assessment",
+    name: name || "Coachability Assessment",
     assessment_type: "SELF",
     status: "IN_PROGRESS",
     sponsored_by_organization: sponsoredByOrganization || null,

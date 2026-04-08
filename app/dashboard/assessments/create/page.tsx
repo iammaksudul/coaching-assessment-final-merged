@@ -29,8 +29,23 @@ export default function CreateAssessmentPage() {
 
     setIsCreating(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const res = await fetch("/api/assessments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || "Failed to create assessment")
+        setIsCreating(false)
+        return
+      }
+    } catch {
+      alert("Failed to create assessment")
+      setIsCreating(false)
+      return
+    }
 
     setIsCreating(false)
     setIsCreated(true)

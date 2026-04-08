@@ -93,7 +93,7 @@ export default function NewAssessmentPage() {
               "Content-Type": "application/json",
               "x-user-id": user.id,
             },
-            body: JSON.stringify({}),
+            body: JSON.stringify({ name: "Coachability Assessment" }),
           })
 
           if (assessmentResponse.ok) {

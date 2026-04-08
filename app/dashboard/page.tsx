@@ -471,13 +471,15 @@ export default function DashboardPage() {
                       <TableRow key={assessment.id}>
                         <TableCell>
                           <div className="space-y-2">
-                            <div className="font-semibold">{assessment.name}</div>
-                            <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-                              {assessment.description}
-                            </p>
+                            <div className="font-semibold">{assessment.name || "Coachability Assessment"}</div>
+                            {assessment.description && (
+                              <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+                                {assessment.description}
+                              </p>
+                            )}
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="text-xs">
-                                {assessment.purpose}
+                                {assessment.purpose || "Self Assessment"}
                               </Badge>
                               <span className="text-xs text-muted-foreground">• 12 Domains</span>
                             </div>
