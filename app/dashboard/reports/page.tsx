@@ -87,11 +87,22 @@ export default function ReportsPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = `/api/assessments/${report.id}/pdf`
-                        link.download = `coachability-report-${report.id}.pdf`
-                        link.click()
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/assessments/${report.id}/pdf`)
+                          if (!res.ok) throw new Error()
+                          const blob = await res.blob()
+                          const url = URL.createObjectURL(blob)
+                          const link = document.createElement('a')
+                          link.href = url
+                          link.download = `coachability-report-${report.id}.pdf`
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                          URL.revokeObjectURL(url)
+                        } catch {
+                          alert("Failed to download PDF. Please try again.")
+                        }
                       }}
                     >
                       <Download className="h-4 w-4" />

@@ -16,6 +16,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 })
     }
 
+    // Fetch participant name for the assessment owner
+    let participantName = "Unknown"
+    try {
+      const userRows = await sql`SELECT name FROM users WHERE id = ${assessment.user_id} LIMIT 1`
+      if (userRows?.[0]?.name) participantName = userRows[0].name
+    } catch {}
+
+
     // Get referee invitations for this assessment
     let invitations: any[] = []
     try {
@@ -38,6 +46,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return NextResponse.json({
       assessment: {
         ...assessment,
+        participant_name: participantName,
         can_close_manually: true,
         closure_requirements: {
           self_assessment: true,

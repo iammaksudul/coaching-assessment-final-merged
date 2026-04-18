@@ -205,6 +205,7 @@ export default function RefereeSurveyPage() {
   const [hasShownFinalNotification, setHasShownFinalNotification] = useState(false)
   const [surveyData, setSurveyData] = useState<any>(null)
   const [tokenError, setTokenError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   // Derived data
   const currentDomain = surveyData?.domains[currentDomainIdx] ?? null
@@ -349,8 +350,7 @@ export default function RefereeSurveyPage() {
         title: "Survey Submitted Successfully!",
         description: `Thank you for providing feedback about ${surveyData.candidate_name}. Your responses have been recorded.`,
       })
-      // Redirect to dashboard with referee tab active
-      router.push("/dashboard?tab=referee")
+      setSubmitted(true)
     } catch (error) {
       toast({
         title: "Submission Failed",
@@ -384,6 +384,39 @@ export default function RefereeSurveyPage() {
     )
   }
 
+  // Submitted — thank you + signup prompt
+  if (submitted) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-lg w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <CardTitle className="text-2xl">Thank You!</CardTitle>
+            <CardDescription className="text-base">
+              Your feedback about <strong>{surveyData.candidate_name}</strong> has been submitted successfully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center space-y-3">
+              <p className="font-medium text-blue-900">Want to discover your own coachability?</p>
+              <p className="text-sm text-blue-700">Create a free account to take your own Coachability Assessment and get personalized development recommendations.</p>
+              <Button onClick={() => router.push("/register")} className="w-full">
+                Create Your Free Account
+              </Button>
+            </div>
+            <div className="text-center">
+              <Button variant="ghost" size="sm" onClick={() => router.push("/")}>
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
+
   const isFirst = currentDomainIdx === 0
   const canNext = currentDomain ? currentDomain.questions.every((q: any) => responses[q.id]) : false
 
@@ -392,10 +425,6 @@ export default function RefereeSurveyPage() {
       <div className={`container py-8 ${isMobile ? "max-w-full" : "max-w-4xl"}`}>
         {/* Header */}
         <div className="mb-8 space-y-2">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-          </Button>
-
           <h1 className="text-3xl font-bold">Referee Assessment</h1>
           <p className="text-lg text-muted-foreground">
             Providing feedback about <strong>{surveyData.candidate_name}</strong>

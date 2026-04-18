@@ -263,11 +263,22 @@ export default function ReportDetailPage() {
               </Button>
             </Link>
             <div className="h-4 w-px bg-border" />
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => {
-              const link = document.createElement('a')
-              link.href = `/api/assessments/${assessmentId}/pdf`
-              link.download = `coachability-report.pdf`
-              link.click()
+            <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
+              try {
+                const res = await fetch(`/api/assessments/${assessmentId}/pdf`)
+                if (!res.ok) throw new Error("Failed to generate PDF")
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = url
+                link.download = `coachability-report.pdf`
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                URL.revokeObjectURL(url)
+              } catch (e) {
+                alert("Failed to download PDF. Please try again.")
+              }
             }}>
               Download PDF
             </Button>

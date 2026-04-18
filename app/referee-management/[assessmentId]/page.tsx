@@ -128,7 +128,7 @@ export default function RefereeManagementPage() {
       <RefereeManagementSystem
         assessmentId={assessment.id}
         assessmentName={assessment.name}
-        candidateName="Alex Johnson"
+        candidateName={assessment.participant_name || "Participant"}
         referees={referees}
         onRefereeUpdate={() => fetchAssessmentData()}
       />
