@@ -11,7 +11,8 @@ export async function GET(request: Request) {
       SELECT s.*, o.name as organization_name
       FROM subscriptions s
       LEFT JOIN organizations o ON s.organization_id = o.id
-      WHERE s.user_id = ${user.id}
+      LEFT JOIN organization_users ou ON ou.organization_id = s.organization_id
+      WHERE ou.user_id = ${user.id}
       ORDER BY s.created_at DESC
       LIMIT 1
     `
