@@ -26,12 +26,14 @@ export default function ManageSubscriptionPage() {
   const [changingPlan, setChangingPlan] = useState(false)
 
   useEffect(() => {
-    fetchSubscription()
-  }, [])
+    if (user?.id) fetchSubscription()
+  }, [user?.id])
 
   const fetchSubscription = async () => {
     try {
-      const res = await fetch("/api/user/subscription")
+      const res = await fetch("/api/user/subscription", {
+        headers: { "x-user-id": user?.id || "" },
+      })
       if (res.ok) {
         const data = await res.json()
         if (data.subscription) {
@@ -83,7 +85,7 @@ export default function ManageSubscriptionPage() {
 
       const res = await fetch("/api/stripe/create-subscription", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
         body: JSON.stringify({ priceId, billingCycle }),
       })
 
