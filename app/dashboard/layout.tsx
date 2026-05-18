@@ -32,6 +32,7 @@ const participantNavItems = [
   { href: "/dashboard/assessments/new", label: "New Assessment", icon: Plus },
   { href: "/dashboard/referees", label: "Referees", icon: Users },
   { href: "/dashboard/reports", label: "Reports", icon: FileText },
+  { href: "/subscription/manage", label: "Subscription", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 

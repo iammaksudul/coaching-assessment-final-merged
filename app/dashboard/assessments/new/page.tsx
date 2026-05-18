@@ -100,10 +100,23 @@ export default function NewAssessmentPage() {
             const { assessment } = await assessmentResponse.json()
             currentAssessmentId = assessment.id
             setAssessmentName(assessment.name || "Coachability Assessment")
+          } else if (assessmentResponse.status === 403) {
+            const err = await assessmentResponse.json()
+            toast({
+              title: "Plan Limit Reached",
+              description: err.error || "Please upgrade your plan to create more assessments.",
+              variant: "destructive",
+            })
+            router.push("/subscription/manage")
+            return
           } else {
-            // Assessment creation failed but we still have domains - use a temporary ID
-            currentAssessmentId = `temp-assessment-${Date.now()}`
-            setAssessmentName("Coachability Assessment")
+            toast({
+              title: "Error",
+              description: "Failed to create assessment. Please try again.",
+              variant: "destructive",
+            })
+            router.push("/dashboard")
+            return
           }
         } else {
           currentAssessmentId = `temp-assessment-${Date.now()}`

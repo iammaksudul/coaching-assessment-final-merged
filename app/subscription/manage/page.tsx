@@ -69,32 +69,41 @@ export default function ManageSubscriptionPage() {
     setChangingPlan(true)
 
     try {
-      // In production, this would call Stripe to change the subscription
-      toast({
-        title: "Plan Change Requested",
-        description: "Your plan change will be processed and take effect on your next billing cycle.",
+      // Fetch the real Stripe price ID for this tier
+      const pricesRes = await fetch("/api/stripe/prices")
+      if (!pricesRes.ok) throw new Error("Failed to fetch prices")
+      const { prices } = await pricesRes.json()
+      const tierData = prices.find((p: any) => p.tier === newTier)
+      const priceId = billingCycle === "annual" ? tierData?.annual?.id : tierData?.monthly?.id
+
+      if (!priceId) {
+        toast({ title: "Error", description: "Price not available. Please contact support.", variant: "destructive" })
+        return
+      }
+
+      const res = await fetch("/api/stripe/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId, billingCycle }),
       })
 
-      // Update local state for demo
-      const newTierData = SUBSCRIPTION_TIERS.find((t) => t.id === newTier)
-      if (newTierData) {
-        setSubscription((prev: any) => ({
-          ...prev,
-          tier: newTier,
-          billing_cycle: billingCycle,
-          amount: billingCycle === "annual" ? newTierData.annual : newTierData.monthly,
-          assessments_limit: Number.parseInt(
-            newTierData.assessments.split("-")[1] || newTierData.assessments.replace("+", ""),
-          ),
-        }))
+      if (!res.ok) {
+        const err = await res.json()
+        toast({ title: "Error", description: err.error || "Failed to start subscription.", variant: "destructive" })
+        return
+      }
+
+      const { clientSecret } = await res.json()
+      if (clientSecret) {
+        // Redirect to Stripe-hosted payment page
+        window.location.href = `/subscription/checkout?client_secret=${clientSecret}&tier=${newTier}&cycle=${billingCycle}`
+      } else {
+        toast({ title: "Success", description: "Subscription activated!" })
+        fetchSubscription()
       }
     } catch (error) {
       console.error("Error changing plan:", error)
-      toast({
-        title: "Error",
-        description: "Failed to change plan. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to change plan. Please try again.", variant: "destructive" })
     } finally {
       setChangingPlan(false)
     }
@@ -180,9 +189,9 @@ export default function ManageSubscriptionPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currentTier?.name}</div>
+            <div className="text-2xl font-bold">{currentTier?.name || "Free"}</div>
             <p className="text-xs text-muted-foreground">
-              ${subscription.amount}/{subscription.billing_cycle === "annual" ? "year" : "month"}
+              {subscription.amount ? `$${subscription.amount}/${subscription.billing_cycle === "annual" ? "year" : "month"}` : "1 free assessment included"}
             </p>
             <div className="mt-2">{getStatusBadge(subscription.status)}</div>
           </CardContent>
@@ -215,8 +224,8 @@ export default function ManageSubscriptionPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{format(new Date(subscription.next_billing_date), "MMM dd")}</div>
-            <p className="text-xs text-muted-foreground">{format(new Date(subscription.next_billing_date), "yyyy")}</p>
+            <div className="text-2xl font-bold">{subscription.next_billing_date ? format(new Date(subscription.next_billing_date), "MMM dd") : "—"}</div>
+            <p className="text-xs text-muted-foreground">{subscription.next_billing_date ? format(new Date(subscription.next_billing_date), "yyyy") : "Free plan"}</p>
           </CardContent>
         </Card>
       </div>

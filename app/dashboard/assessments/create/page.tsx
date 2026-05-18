@@ -3,21 +3,24 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CheckCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 export default function CreateAssessmentPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [isCreated, setIsCreated] = useState(false)
+  const [limitError, setLimitError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,12 +35,16 @@ export default function CreateAssessmentPage() {
     try {
       const res = await fetch("/api/assessments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
         body: JSON.stringify({ name: name.trim() }),
       })
       if (!res.ok) {
         const err = await res.json()
-        alert(err.error || "Failed to create assessment")
+        if (res.status === 403) {
+          setLimitError(err.error || "Plan limit reached.")
+        } else {
+          alert(err.error || "Failed to create assessment")
+        }
         setIsCreating(false)
         return
       }
@@ -70,6 +77,33 @@ export default function CreateAssessmentPage() {
             <Button asChild>
               <Link href="/dashboard/assessments/new">Start Assessment</Link>
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (limitError) {
+    return (
+      <div className="container py-8 max-w-2xl">
+        <Card>
+          <CardHeader className="text-center">
+            <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <CardTitle>Assessment Limit Reached</CardTitle>
+            <CardDescription>{limitError}</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Upgrade your plan to unlock more assessments.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button asChild>
+                <Link href="/subscription/manage">View Plans & Upgrade</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard">Back to Dashboard</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
