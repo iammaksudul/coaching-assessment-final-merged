@@ -9,7 +9,7 @@ export async function GET(req: Request) {
 
     const users = await sql`
       SELECT u.id, u.name, u.email, u.role, u.account_type, u.created_at, u.organization_id,
-             o.name as organization_name
+             u.status, o.name as organization_name
       FROM users u
       LEFT JOIN organizations o ON u.organization_id = o.id
       ORDER BY u.created_at DESC

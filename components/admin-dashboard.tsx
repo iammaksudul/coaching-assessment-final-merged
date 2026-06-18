@@ -17,7 +17,7 @@ import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import {
   Users, Building2, CreditCard, FileText, AlertTriangle, Settings, Search,
-  UserX, CheckCircle, TrendingUp,
+  UserX, CheckCircle, TrendingUp, Trash2,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
@@ -57,6 +57,8 @@ export function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [suspensionReason, setSuspensionReason] = useState("")
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("")
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export function AdminDashboard() {
           const data = await usersRes.json()
           setUsers((data.users || []).map((u: any) => ({
             id: u.id, name: u.name || "", email: u.email || "", role: u.role || "PARTICIPANT",
-            status: "ACTIVE", created_at: u.created_at, organization_name: u.organization_name,
+            status: u.status || "ACTIVE", created_at: u.created_at, organization_name: u.organization_name,
           })))
         }
         if (paymentsRes.ok) {
@@ -103,15 +105,53 @@ export function AdminDashboard() {
       toast({ title: "Error", description: "Please provide a reason", variant: "destructive" })
       return
     }
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: "SUSPENDED" } : u))
-    toast({ title: "Success", description: `${user.name} suspended` })
+    try {
+      const res = await fetch("/api/admin/users/suspend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, reason: suspensionReason }),
+      })
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: "SUSPENDED" } : u))
+      toast({ title: "Success", description: `${user.name} suspended` })
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to suspend", variant: "destructive" })
+    }
     setSelectedUser(null)
     setSuspensionReason("")
   }
 
-  const handleReactivateUser = (user: User) => {
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: "ACTIVE" } : u))
-    toast({ title: "Success", description: `${user.name} reactivated` })
+  const handleReactivateUser = async (user: User) => {
+    try {
+      const res = await fetch("/api/admin/users/reactivate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      if (!res.ok) throw new Error("Failed")
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: "ACTIVE" } : u))
+      toast({ title: "Success", description: `${user.name} reactivated` })
+    } catch {
+      toast({ title: "Error", description: "Failed to reactivate", variant: "destructive" })
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return
+    try {
+      const res = await fetch("/api/admin/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userToDelete.id, confirmEmail: deleteConfirmEmail }),
+      })
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+      toast({ title: "User Deleted", description: `${userToDelete.name} and all related records removed.` })
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to delete", variant: "destructive" })
+    }
+    setUserToDelete(null)
+    setDeleteConfirmEmail("")
   }
 
   const roleBadge = (role: string) => {
@@ -241,6 +281,7 @@ export function AdminDashboard() {
                       <TableCell>{statusBadge(user.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}</TableCell>
                       <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
                         {user.status === "ACTIVE" ? (
                           <Dialog>
                             <DialogTrigger asChild>
@@ -265,6 +306,10 @@ export function AdminDashboard() {
                             <CheckCircle className="h-4 w-4 mr-1" />Reactivate
                           </Button>
                         )}
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 bg-transparent" onClick={() => setUserToDelete(user)}>
+                          <Trash2 className="h-4 w-4 mr-1" />Delete
+                        </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -349,6 +394,26 @@ export function AdminDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={!!userToDelete} onOpenChange={(open) => { if (!open) { setUserToDelete(null); setDeleteConfirmEmail("") } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User: {userToDelete?.name}</DialogTitle>
+            <DialogDescription>
+              This will permanently remove this user and ALL related records (assessments, responses, reports, invitations, sharing permissions). This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-red-600">Type the user&apos;s email to confirm: <strong>{userToDelete?.email}</strong></p>
+            <Input value={deleteConfirmEmail} onChange={e => setDeleteConfirmEmail(e.target.value)} placeholder="Enter email to confirm..." />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setUserToDelete(null); setDeleteConfirmEmail("") }}>Cancel</Button>
+            <Button variant="destructive" disabled={deleteConfirmEmail !== userToDelete?.email} onClick={handleDeleteUser}>Delete Permanently</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
